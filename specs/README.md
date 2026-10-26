@@ -20,7 +20,7 @@ A spec is `implemented` when every acceptance criterion has a passing test or a 
 
 | # | Spec | What it leaves working | Status |
 |---|---|---|---|
-| 01 | Record audio | Press a button on the phone and play back the recording | not started |
+| 01 | Record audio | Press a button on the phone and play back the recording | in progress |
 | 02 | Deploy with HTTPS | The app opens from a real phone | not started |
 | 03 | Transcribe a voice note | Audio goes to the backend and the text is shown. Includes minimal protection: a fixed access token in the link and spending caps in the OpenAI and Anthropic consoles | not started |
 | 04 | Recipe sheet from a voice note | The LLM structures the text, it is validated and saved, and the sheet is shown. Introduces the database and the list of preparations | not started |
