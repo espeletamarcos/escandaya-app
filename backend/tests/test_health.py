@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-from backend.main import app
+from backend.main import create_app
 
-client = TestClient(app)
+client = TestClient(create_app(static_dir=None))
 
 
 def test_health_returns_ok() -> None:
