@@ -2,7 +2,8 @@
 
 - [x] Get approval to add the Dockerfile, the provider config and the deploy secret in CI, and confirm Fly.io as the provider (all criteria, enabler)
   - Approved: Fly.io, `Dockerfile`, `.dockerignore`, `fly.toml`, and a Fly deploy token as a CI secret. Both manual (`fly deploy`) and CI deploys.
-- [ ] Write tests, then mount the API under `/api` in `main.py` and update the health test to `/api/health` (02-C2)
+- [x] Write tests, then mount the API under `/api` in `main.py` and update the health test to `/api/health` (02-C2)
+  - Also removed the `/api` rewrite from the Vite dev proxy, so dev and production use the same paths.
 - [ ] Write tests, then serve `frontend/dist` from FastAPI with an `index.html` fallback that does not apply under `/api` (02-C1, 02-C2)
 - [ ] Add a multi-stage `Dockerfile` and `.dockerignore`, and check that the image runs locally over plain HTTP (02-C1)
 - [ ] Create the Fly.io app, add `fly.toml`, and deploy by hand; the app opens on its `https://` URL (02-C1, 02-C2)

@@ -9,7 +9,7 @@ Serve the built frontend from the FastAPI app, so one service gives one origin o
 4. Deploy the image to the hosting provider, which terminates TLS and gives an `https://` URL.
 5. Deploy from `main` after CI passes, using a Fly deploy token stored as a GitHub secret, and also keep a documented manual `fly deploy` (02-C5). Decided: both.
 
-No CORS and no change to `client.ts` or the Vite config are needed, because the browser sees a single origin. This settles the open decision "same domain or CORS" in `docs/product/stack.md`.
+No CORS and no change to `client.ts` are needed, because the browser sees a single origin. The Vite dev proxy no longer strips `/api`, so dev and production use the same paths. This settles the open decision "same domain or CORS" in `docs/product/stack.md`.
 
 Mapping to criteria:
 - 02-C1, 02-C3, 02-C4: come from serving the PWA over HTTPS; verified by hand on real phones.
