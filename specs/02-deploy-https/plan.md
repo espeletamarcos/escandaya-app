@@ -7,7 +7,7 @@ Serve the built frontend from the FastAPI app, so one service gives one origin o
 2. Serve `frontend/dist` as static files with an `index.html` fallback, so the PWA manifest, service worker and icons come from the same origin.
 3. Build everything in one container image: a Node stage runs `npm ci && npm run build`, a Python stage runs `uv sync --frozen` and copies `dist` in. Start command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`.
 4. Deploy the image to the hosting provider, which terminates TLS and gives an `https://` URL.
-5. Deploy from `main` after CI passes, or document the manual command (02-C5).
+5. Deploy from `main` after CI passes, using a Fly deploy token stored as a GitHub secret, and also keep a documented manual `fly deploy` (02-C5). Decided: both.
 
 No CORS and no change to `client.ts` or the Vite config are needed, because the browser sees a single origin. This settles the open decision "same domain or CORS" in `docs/product/stack.md`.
 
@@ -30,7 +30,7 @@ All three give automatic HTTPS and deploy a Dockerfile. Pricing and free tiers c
 | Railway | Simple setup from a GitHub repo; volumes available | Trial or usage-based pricing instead of a stable free tier |
 | Render | Easiest web service setup; free tier is available | Free web services sleep after idle, with cold starts around a minute; persistent disks are paid |
 
-Recommendation: **Fly.io**, because spec 04 needs a persistent volume for SQLite and Fly handles that with the same setup. The decision is the user's; it is open until approved, and the plan changes only in the provider-specific files if another is chosen.
+Decision: **Fly.io**, because spec 04 needs a persistent volume for SQLite and Fly handles that with the same setup. Approved by the user.
 
 ## Files touched
 - `backend/src/backend/main.py`: mount the API under `/api`, serve `frontend/dist` with an `index.html` fallback.
@@ -49,5 +49,6 @@ Recommendation: **Fly.io**, because spec 04 needs a persistent volume for SQLite
 - **Static fallback swallowing API 404s:** the `index.html` fallback must not apply under `/api`.
 - **Cold starts** if the machine auto-stops: the first load is slow. Acceptable for the MVP, but note it in the README.
 - **Public URL without a token** until spec 03. Nothing sensitive exists yet, and the URL is not shared widely.
-- **Dependency and config changes** (Docker, provider CLI, a CI deploy secret) need approval before adding, per `CLAUDE.md`.
+- **Dependency and config changes** (Docker, provider CLI, a CI deploy secret) were approved in task 1.
+- **CI deploy token:** a leaked or over-broad token can deploy to the app. Use a token scoped to this app only, stored as a GitHub secret, never in the repo.
 - **Moving the API under `/api`** changes the backend's route layout; the existing health test must be updated with it.
