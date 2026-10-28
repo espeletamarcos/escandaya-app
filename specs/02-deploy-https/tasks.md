@@ -7,7 +7,8 @@
 - [x] Write tests, then serve `frontend/dist` from FastAPI with an `index.html` fallback that does not apply under `/api` (02-C1, 02-C2)
   - The folder comes from `FRONTEND_DIST`, or `frontend/dist` in the repo. Missing files with an extension return 404 instead of `index.html`.
 - [x] Add a multi-stage `Dockerfile` and `.dockerignore`, and check that the image runs locally over plain HTTP (02-C1)
-- [ ] Create the Fly.io app, add `fly.toml`, and deploy by hand; the app opens on its `https://` URL (02-C1, 02-C2)
+- [x] Create the Fly.io app, add `fly.toml`, and deploy by hand; the app opens on its `https://` URL (02-C1, 02-C2)
+  - App `escandaya` at https://escandaya.fly.dev, region `cdg` (`mad` is deprecated for new machines). Deployed with `fly deploy --ha=false` so there is one machine.
 - [ ] Add a smoke test script that checks the deployed `/api/health` returns `{"status": "ok"}` (02-C2)
 - [ ] Add a deploy job in CI that runs after the checks pass on `main`, and document the manual `fly deploy` steps in `README.MD` (02-C5)
 - [ ] Manual check on Android Chrome and iOS Safari: the app opens over HTTPS and loads without errors; note results in this file (02-C1)
