@@ -13,8 +13,14 @@
   - `scripts/smoke.sh [base-url]`, default `https://escandaya.fly.dev`. Retries 5 times because the machine auto-stops when idle.
 - [x] Add a deploy job in CI that runs after the checks pass on `main`, and document the manual `fly deploy` steps in `README.MD` (02-C5)
   - The `deploy` job needs `backend` and `frontend`, runs only on push to `main`, and finishes with `scripts/smoke.sh`. The first real run happens when this is merged.
-- [ ] Manual check on Android Chrome and iOS Safari: the app opens over HTTPS and loads without errors; note results in this file (02-C1)
-- [ ] Manual check of recording on both phones: permission prompt, record, stop, playback, and the denied-permission message; note results here and in `specs/01-record-audio/tasks.md` (02-C3)
-- [ ] Manual check that the app installs to the home screen and opens in standalone mode, including recording in the installed app on iOS (02-C4)
-- [ ] Deploy twice and check that the phone picks up the new build without clearing site data (edge case: stale service worker)
-- [ ] Tick the open decisions in `docs/product/stack.md` and update the statuses of specs 01 and 02 in `specs/README.md`
+- [x] Manual check on Android Chrome and iOS Safari: the app opens over HTTPS and loads without errors; note results in this file (02-C1)
+  - iOS Safari: OK (2026-10-29).
+  - Android Chrome: OK (2026-10-30).
+- [x] Manual check of recording on both phones: permission prompt, record, stop, playback, and the denied-permission message; note results here and in `specs/01-record-audio/tasks.md` (02-C3)
+- [x] Manual check that the app installs to the home screen and opens in standalone mode, including recording in the installed app on iOS (02-C4)
+  - Android Chrome and iOS: installs and works in standalone mode (2026-10-30).
+  - The icons (`frontend/public/icon-192.png`, `icon-512.png`) are plain navy placeholders; a real icon is still to do.
+- [x] Deploy twice and check that the phone picks up the new build without clearing site data (edge case: stale service worker)
+  - Deployed a temporary "build A" and then "build B" marker (2026-10-30). The installed app showed A after a reload and B after just closing and reopening it, so `autoUpdate` works. The marker was removed afterwards.
+  - The live app still serves "build B" until the next deploy; CI deploys the clean version when this is merged to `main`.
+- [x] Tick the open decisions in `docs/product/stack.md` and update the statuses of specs 01 and 02 in `specs/README.md`

@@ -7,7 +7,7 @@
 - [x] Test and implement replacing a recording, revoking the old object URL (01-C6)
 - [x] Implement `BrowserRecorder` with runtime mime type selection, releasing tracks on stop (01-C1, 01-C2)
 - [x] Build `RecordScreen`: record button with a recording state, error message and `<audio controls>` player; render it from `App` (01-C1, 01-C2, 01-C4)
-- [ ] Manual check on desktop Chrome, and on Android Chrome and iOS Safari through a tunnel or after spec 02; note results in this file (01-C3)
+- [x] Manual check on desktop Chrome, and on Android Chrome and iOS Safari through a tunnel or after spec 02; note results in this file (01-C3)
   - Desktop Chrome: record, stop, playback, re-record and denied permission all work.
-  - Android Chrome and iOS Safari: deferred until spec 02 (HTTPS). Spec 01 becomes `implemented` once this check passes.
+  - Android Chrome and iOS Safari: record, stop and playback work over HTTPS on both real phones (2026-10-30, checked through spec 02).
 - [x] Handle stop right after start and tab in background (edge cases)
