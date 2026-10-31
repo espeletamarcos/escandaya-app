@@ -1,6 +1,6 @@
 # 02 – Deploy with HTTPS
 
-Status: approved
+Status: implemented
 
 ## Why
 Phone browsers only allow microphone access and PWA installation over HTTPS, so the app must be deployed before it can be tried on a real phone. This spec also unblocks the mobile check of spec 01 (01-C3), which cannot be marked `implemented` until it passes on a real device.

@@ -1,6 +1,6 @@
 # 01 – Record audio
 
-Status: in progress
+Status: implemented
 
 ## Why
 Everything in the app starts with the cook speaking. Before transcribing anything, we need to know that the phone microphone works from the PWA and that a recording is good enough to be played back. This is the smallest slice that proves the capture side.
