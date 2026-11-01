@@ -1,7 +1,7 @@
 # 03 – Tasks
 
 ## Backend
-- [ ] Add the `openai` package to the backend with `uv add openai` and check that `make test` and `make lint` still pass (all criteria, enabler; approved in the plan)
+- [x] Add the `openai` package to the backend with `uv add openai` and check that `make test` and `make lint` still pass (all criteria, enabler; approved in the plan)
 - [ ] Write tests, then add `settings.py`: read `ACCESS_TOKENS` (trimmed, empty entries dropped), `OPENAI_API_KEY` and `TRANSCRIPTION_MODEL` (default `gpt-4o-mini-transcribe`) (03-C3, 03-C5)
 - [ ] Write tests, then add the token dependency in `auth.py` and a protected router under `/api`, with `GET /api/session` returning 204. `/api/health` and the static frontend stay public. An empty or unset list rejects everything (03-C3)
 - [ ] Define the `Transcriber` protocol and a `FakeTranscriber` in `conftest.py`, and wire the transcriber into the app as an overridable dependency (03-C5)
