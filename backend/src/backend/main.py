@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
+from backend import transcription
 from backend.auth import require_token
 
 api = APIRouter(prefix="/api")
@@ -18,6 +19,9 @@ def health() -> dict[str, str]:
 @protected.get("/session", status_code=204)
 def session() -> None:
     """Lets the app check its stored token on open."""
+
+
+protected.include_router(transcription.router)
 
 
 def default_static_dir() -> Path | None:

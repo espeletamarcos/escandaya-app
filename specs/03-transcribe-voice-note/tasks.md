@@ -5,7 +5,7 @@
 - [x] Write tests, then add `settings.py`: read `ACCESS_TOKENS` (trimmed, empty entries dropped), `OPENAI_API_KEY` and `TRANSCRIPTION_MODEL` (default `gpt-4o-mini-transcribe`) (03-C3, 03-C5)
 - [x] Write tests, then add the token dependency in `auth.py` and a protected router under `/api`, with `GET /api/session` returning 204. `/api/health` and the static frontend stay public. An empty or unset list rejects everything (03-C3)
 - [x] Define the `Transcriber` protocol and a `FakeTranscriber` in `conftest.py`, and wire the transcriber into the app as an overridable dependency (03-C5)
-- [ ] Write tests, then add `POST /api/transcriptions`: accept `audio/webm` and `audio/mp4` (codec parameters allowed) and return `{"text": ...}`. Return 415 for other types and 503 when the key is missing (03-C5)
+- [x] Write tests, then add `POST /api/transcriptions`: accept `audio/webm` and `audio/mp4` (codec parameters allowed) and return `{"text": ...}`. Return 415 for other types and 503 when the key is missing (03-C5)
 - [ ] Write tests, then enforce the 5 MB cap with 413, checking `Content-Length` first and then the bytes as they are read (03-C6)
 - [ ] Write tests, then map transcriber failures to 502 and timeouts to 504, with a generic `detail` that has no key and no provider message (03-C7)
 - [ ] Implement `OpenAITranscriber`: `language="es"`, the configured model, a 60s timeout, SDK retries off, and an in-memory file whose extension matches the type (03-C5)

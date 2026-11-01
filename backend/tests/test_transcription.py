@@ -42,3 +42,75 @@ def test_make_client_installs_the_fake_transcriber(make_client: ClientFactory) -
 
     override = client.app.dependency_overrides[get_transcriber]
     assert override() is fake
+
+
+TOKENS = ("chef-token",)
+AUTH = {"Authorization": "Bearer chef-token"}
+
+
+def post_audio(client, body: bytes = b"audio-bytes", content_type: str | None = "audio/webm"):
+    headers = dict(AUTH)
+    if content_type is not None:
+        headers["Content-Type"] = content_type
+    return client.post("/api/transcriptions", content=body, headers=headers)
+
+
+@pytest.mark.parametrize(
+    ("sent_type", "expected_type"),
+    [
+        ("audio/webm", "audio/webm"),
+        ("audio/webm;codecs=opus", "audio/webm"),
+        ("audio/mp4", "audio/mp4"),
+        ("Audio/MP4; codecs=mp4a.40.2", "audio/mp4"),
+    ],
+)
+def test_transcribes_supported_audio(
+    make_client: ClientFactory, sent_type: str, expected_type: str
+) -> None:
+    fake = FakeTranscriber(text="dos kilos de tartar")
+    client = make_client(TOKENS, transcriber=fake)
+
+    response = post_audio(client, b"audio-bytes", sent_type)
+
+    assert response.status_code == 200
+    assert response.json() == {"text": "dos kilos de tartar"}
+    assert fake.calls == [(b"audio-bytes", expected_type)]
+
+
+@pytest.mark.parametrize("sent_type", ["text/plain", "audio/wav", "application/octet-stream", None])
+def test_unsupported_type_is_rejected(make_client: ClientFactory, sent_type: str | None) -> None:
+    fake = FakeTranscriber()
+    client = make_client(TOKENS, transcriber=fake)
+
+    response = post_audio(client, content_type=sent_type)
+
+    assert response.status_code == 415
+    assert fake.calls == []
+
+
+def test_transcription_requires_a_token(make_client: ClientFactory) -> None:
+    fake = FakeTranscriber()
+    client = make_client(TOKENS, transcriber=fake)
+
+    response = client.post(
+        "/api/transcriptions", content=b"audio", headers={"Content-Type": "audio/webm"}
+    )
+
+    assert response.status_code == 401
+    assert fake.calls == []
+
+
+def test_transcription_without_openai_key_is_unavailable(make_client: ClientFactory) -> None:
+    client = make_client(TOKENS)
+
+    response = post_audio(client)
+
+    assert response.status_code == 503
+
+
+def test_unsupported_type_wins_over_missing_key(make_client: ClientFactory) -> None:
+    client = make_client(TOKENS)
+
+    response = post_audio(client, content_type="text/plain")
+
+    assert response.status_code == 415
