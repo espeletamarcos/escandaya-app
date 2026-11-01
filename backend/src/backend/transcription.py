@@ -9,6 +9,27 @@ from backend.settings import Settings, get_settings
 # Chrome records audio/webm, iOS Safari records audio/mp4.
 SUPPORTED_TYPES = frozenset({"audio/webm", "audio/mp4"})
 
+# A 2-minute voice note with margin. Provisional until real recordings are measured.
+MAX_AUDIO_BYTES = 5 * 1024 * 1024
+
+
+def _too_large() -> HTTPException:
+    return HTTPException(status_code=413, detail="Audio is too large")
+
+
+async def read_audio(request: Request) -> bytes:
+    """Read the body, refusing anything over MAX_AUDIO_BYTES without loading it all."""
+    declared = request.headers.get("content-length")
+    if declared is not None and declared.isdigit() and int(declared) > MAX_AUDIO_BYTES:
+        raise _too_large()
+
+    audio = bytearray()
+    async for chunk in request.stream():
+        audio.extend(chunk)
+        if len(audio) > MAX_AUDIO_BYTES:
+            raise _too_large()
+    return bytes(audio)
+
 
 class Transcriber(Protocol):
     """Turns a voice note into text. Language and model are fixed by the implementation."""
@@ -45,7 +66,7 @@ async def create_transcription(
     content_type: Annotated[str, Depends(audio_type)],
     transcriber: Annotated[Transcriber, Depends(get_transcriber)],
 ) -> TranscriptionResponse:
-    audio = await request.body()
+    audio = await read_audio(request)
     # The transcriber blocks on a network call; keep it off the event loop.
     text = await run_in_threadpool(transcriber.transcribe, audio, content_type)
     return TranscriptionResponse(text=text)

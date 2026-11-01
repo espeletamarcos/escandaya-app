@@ -2,7 +2,7 @@ import pytest
 from conftest import ClientFactory, FakeTranscriber, make_settings
 from fastapi import HTTPException
 
-from backend.transcription import Transcriber, get_transcriber
+from backend.transcription import MAX_AUDIO_BYTES, Transcriber, get_transcriber
 
 
 def test_get_transcriber_is_unavailable_without_a_key() -> None:
@@ -114,3 +114,69 @@ def test_unsupported_type_wins_over_missing_key(make_client: ClientFactory) -> N
     response = post_audio(client, content_type="text/plain")
 
     assert response.status_code == 415
+
+
+def chunks(total: int, size: int = 64 * 1024):
+    """Yield `total` bytes in chunks, so the client sends no Content-Length."""
+    while total > 0:
+        step = min(size, total)
+        yield b"a" * step
+        total -= step
+
+
+def test_audio_at_the_limit_is_accepted(make_client: ClientFactory) -> None:
+    fake = FakeTranscriber(text="ok")
+    client = make_client(TOKENS, transcriber=fake)
+
+    response = post_audio(client, b"a" * MAX_AUDIO_BYTES)
+
+    assert response.status_code == 200
+    assert len(fake.calls[0][0]) == MAX_AUDIO_BYTES
+
+
+def test_audio_over_the_limit_is_rejected(make_client: ClientFactory) -> None:
+    fake = FakeTranscriber()
+    client = make_client(TOKENS, transcriber=fake)
+
+    response = post_audio(client, b"a" * (MAX_AUDIO_BYTES + 1))
+
+    assert response.status_code == 413
+    assert fake.calls == []
+
+
+def test_declared_length_over_the_limit_is_rejected_before_reading(
+    make_client: ClientFactory,
+) -> None:
+    fake = FakeTranscriber()
+    client = make_client(TOKENS, transcriber=fake)
+    headers = {**AUTH, "Content-Type": "audio/webm", "Content-Length": str(MAX_AUDIO_BYTES + 1)}
+
+    # The body is shorter than declared: only the header can trigger the 413.
+    response = client.post("/api/transcriptions", content=b"short", headers=headers)
+
+    assert response.status_code == 413
+    assert fake.calls == []
+
+
+def test_streamed_audio_over_the_limit_is_rejected(make_client: ClientFactory) -> None:
+    fake = FakeTranscriber()
+    client = make_client(TOKENS, transcriber=fake)
+    headers = {**AUTH, "Content-Type": "audio/webm"}
+
+    response = client.post(
+        "/api/transcriptions", content=chunks(MAX_AUDIO_BYTES + 1), headers=headers
+    )
+
+    assert response.status_code == 413
+    assert fake.calls == []
+
+
+def test_streamed_audio_under_the_limit_is_accepted(make_client: ClientFactory) -> None:
+    fake = FakeTranscriber(text="ok")
+    client = make_client(TOKENS, transcriber=fake)
+    headers = {**AUTH, "Content-Type": "audio/mp4"}
+
+    response = client.post("/api/transcriptions", content=chunks(200_000), headers=headers)
+
+    assert response.status_code == 200
+    assert len(fake.calls[0][0]) == 200_000
