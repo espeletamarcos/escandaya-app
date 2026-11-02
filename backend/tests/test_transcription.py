@@ -1,9 +1,15 @@
+from types import SimpleNamespace
+from typing import Any
+
+import httpx
+import openai
 import pytest
 from conftest import ClientFactory, FakeTranscriber, make_settings
 from fastapi import HTTPException
 
 from backend.transcription import (
     MAX_AUDIO_BYTES,
+    OpenAITranscriber,
     Transcriber,
     TranscriptionError,
     TranscriptionTimeout,
@@ -18,12 +24,16 @@ def test_get_transcriber_is_unavailable_without_a_key() -> None:
     assert error.value.status_code == 503
 
 
-def test_get_transcriber_is_unavailable_until_openai_is_wired() -> None:
-    # Task 8 replaces this with an OpenAITranscriber when a key is set.
-    with pytest.raises(HTTPException) as error:
-        get_transcriber(make_settings(openai_api_key="sk-test"))
+def test_get_transcriber_returns_openai_transcriber_with_a_key() -> None:
+    transcriber = get_transcriber(make_settings(openai_api_key="sk-test"))
 
-    assert error.value.status_code == 503
+    assert isinstance(transcriber, OpenAITranscriber)
+
+
+def test_get_transcriber_reuses_the_same_instance() -> None:
+    settings = make_settings(openai_api_key="sk-test")
+
+    assert get_transcriber(settings) is get_transcriber(settings)
 
 
 def test_fake_transcriber_returns_text_and_records_calls() -> None:
@@ -216,3 +226,89 @@ def test_transcriber_failures_return_a_generic_error(
 def test_timeout_is_a_kind_of_transcription_error() -> None:
     # Implementations may raise either; callers catching TranscriptionError see both.
     assert issubclass(TranscriptionTimeout, TranscriptionError)
+
+
+# --- OpenAITranscriber (the SDK call is stubbed; tests never reach OpenAI) ---
+
+OPENAI_REQUEST = httpx.Request("POST", "https://api.openai.com/v1/audio/transcriptions")
+
+
+def stub_create(
+    monkeypatch: pytest.MonkeyPatch,
+    transcriber: OpenAITranscriber,
+    text: str = "",
+    error: Exception | None = None,
+) -> list[dict[str, Any]]:
+    """Replace the SDK call with a stub that records its arguments."""
+    calls: list[dict[str, Any]] = []
+
+    def create(**kwargs: Any) -> SimpleNamespace:
+        calls.append(kwargs)
+        if error is not None:
+            raise error
+        return SimpleNamespace(text=text)
+
+    monkeypatch.setattr(transcriber.client.audio.transcriptions, "create", create)
+    return calls
+
+
+def test_openai_client_has_a_60s_timeout_and_no_retries() -> None:
+    transcriber = OpenAITranscriber(api_key="sk-test", model="some-model")
+
+    assert transcriber.client.timeout == 60.0
+    assert transcriber.client.max_retries == 0
+
+
+@pytest.mark.parametrize(
+    ("content_type", "filename"),
+    [("audio/webm", "voice-note.webm"), ("audio/mp4", "voice-note.mp4")],
+)
+def test_openai_transcriber_sends_audio_in_spanish_with_matching_extension(
+    monkeypatch: pytest.MonkeyPatch, content_type: str, filename: str
+) -> None:
+    transcriber = OpenAITranscriber(api_key="sk-test", model="some-model")
+    calls = stub_create(monkeypatch, transcriber, text="dos kilos de tartar")
+
+    text = transcriber.transcribe(b"audio-bytes", content_type)
+
+    assert text == "dos kilos de tartar"
+    assert calls == [
+        {
+            "model": "some-model",
+            "file": (filename, b"audio-bytes", content_type),
+            "language": "es",
+        }
+    ]
+
+
+def test_openai_timeout_becomes_transcription_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    transcriber = OpenAITranscriber(api_key="sk-test", model="some-model")
+    stub_create(monkeypatch, transcriber, error=openai.APITimeoutError(request=OPENAI_REQUEST))
+
+    with pytest.raises(TranscriptionTimeout):
+        transcriber.transcribe(b"audio", "audio/webm")
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        openai.APIConnectionError(request=OPENAI_REQUEST),
+        openai.APIStatusError(
+            SECRET_MESSAGE,
+            response=httpx.Response(401, request=OPENAI_REQUEST),
+            body=None,
+        ),
+    ],
+)
+def test_openai_failures_become_transcription_error(
+    monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    transcriber = OpenAITranscriber(api_key="sk-test", model="some-model")
+    stub_create(monkeypatch, transcriber, error=error)
+
+    with pytest.raises(TranscriptionError) as raised:
+        transcriber.transcribe(b"audio", "audio/webm")
+
+    assert not isinstance(raised.value, TranscriptionTimeout)
+    assert "sk-secret" not in str(raised.value)
+    assert raised.value.__cause__ is None

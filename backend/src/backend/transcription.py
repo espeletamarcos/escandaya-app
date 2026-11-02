@@ -1,5 +1,7 @@
+from functools import lru_cache
 from typing import Annotated, Protocol
 
+import openai
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
@@ -49,10 +51,48 @@ class Transcriber(Protocol):
     def transcribe(self, audio: bytes, content_type: str) -> str: ...
 
 
+# The API infers the audio format from the filename extension.
+FILENAMES = {"audio/webm": "voice-note.webm", "audio/mp4": "voice-note.mp4"}
+
+OPENAI_TIMEOUT_SECONDS = 60.0
+
+
+class OpenAITranscriber:
+    """Transcribes Spanish voice notes with the OpenAI API, entirely in memory."""
+
+    def __init__(self, api_key: str, model: str) -> None:
+        self.model = model
+        # No SDK retries: a retry could double the wait past the frontend's 90s timeout.
+        self.client = openai.OpenAI(
+            api_key=api_key, timeout=OPENAI_TIMEOUT_SECONDS, max_retries=0
+        )
+
+    def transcribe(self, audio: bytes, content_type: str) -> str:
+        try:
+            result = self.client.audio.transcriptions.create(
+                model=self.model,
+                file=(FILENAMES[content_type], audio, content_type),
+                language="es",
+            )
+        # APITimeoutError subclasses APIConnectionError, so it must be caught first.
+        except openai.APITimeoutError:
+            raise TranscriptionTimeout from None
+        except openai.OpenAIError:
+            raise TranscriptionError from None
+        return result.text
+
+
+@lru_cache(maxsize=1)
+def _openai_transcriber(api_key: str, model: str) -> OpenAITranscriber:
+    """One client per key and model, so its HTTP connections are reused."""
+    return OpenAITranscriber(api_key=api_key, model=model)
+
+
 def get_transcriber(settings: Annotated[Settings, Depends(get_settings)]) -> Transcriber:
     """FastAPI dependency for the transcriber. Tests override it with a fake."""
-    # Task 8 returns an OpenAITranscriber here when settings.openai_api_key is set.
-    raise HTTPException(status_code=503, detail="Transcription is not configured")
+    if settings.openai_api_key is None:
+        raise HTTPException(status_code=503, detail="Transcription is not configured")
+    return _openai_transcriber(settings.openai_api_key, settings.transcription_model)
 
 
 def audio_type(content_type: Annotated[str | None, Header()] = None) -> str:
