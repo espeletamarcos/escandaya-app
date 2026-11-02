@@ -31,8 +31,20 @@ async def read_audio(request: Request) -> bytes:
     return bytes(audio)
 
 
+class TranscriptionError(Exception):
+    """The provider failed or could not be reached. The message stays server-side."""
+
+
+class TranscriptionTimeout(TranscriptionError):
+    """The provider did not answer in time."""
+
+
 class Transcriber(Protocol):
-    """Turns a voice note into text. Language and model are fixed by the implementation."""
+    """Turns a voice note into text. Language and model are fixed by the implementation.
+
+    Implementations raise TranscriptionTimeout on timeout and TranscriptionError on any
+    other provider or network failure, translating their own exceptions.
+    """
 
     def transcribe(self, audio: bytes, content_type: str) -> str: ...
 
@@ -68,5 +80,11 @@ async def create_transcription(
 ) -> TranscriptionResponse:
     audio = await read_audio(request)
     # The transcriber blocks on a network call; keep it off the event loop.
-    text = await run_in_threadpool(transcriber.transcribe, audio, content_type)
+    # Details are dropped (`from None`): provider messages may echo the key or request ids.
+    try:
+        text = await run_in_threadpool(transcriber.transcribe, audio, content_type)
+    except TranscriptionTimeout:
+        raise HTTPException(status_code=504, detail="Transcription timed out") from None
+    except TranscriptionError:
+        raise HTTPException(status_code=502, detail="Transcription failed") from None
     return TranscriptionResponse(text=text)

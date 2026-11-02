@@ -2,7 +2,13 @@ import pytest
 from conftest import ClientFactory, FakeTranscriber, make_settings
 from fastapi import HTTPException
 
-from backend.transcription import MAX_AUDIO_BYTES, Transcriber, get_transcriber
+from backend.transcription import (
+    MAX_AUDIO_BYTES,
+    Transcriber,
+    TranscriptionError,
+    TranscriptionTimeout,
+    get_transcriber,
+)
 
 
 def test_get_transcriber_is_unavailable_without_a_key() -> None:
@@ -180,3 +186,33 @@ def test_streamed_audio_under_the_limit_is_accepted(make_client: ClientFactory) 
 
     assert response.status_code == 200
     assert len(fake.calls[0][0]) == 200_000
+
+
+SECRET_MESSAGE = "Incorrect API key provided: sk-secret-123 (request req_abc)"
+
+
+@pytest.mark.parametrize(
+    ("error", "status", "detail"),
+    [
+        (TranscriptionError(SECRET_MESSAGE), 502, "Transcription failed"),
+        (TranscriptionTimeout(SECRET_MESSAGE), 504, "Transcription timed out"),
+    ],
+)
+def test_transcriber_failures_return_a_generic_error(
+    make_client: ClientFactory, error: Exception, status: int, detail: str
+) -> None:
+    fake = FakeTranscriber(error=error)
+    client = make_client(TOKENS, transcriber=fake)
+
+    response = post_audio(client)
+
+    assert response.status_code == status
+    assert response.json() == {"detail": detail}
+    assert "sk-secret" not in response.text
+    assert "req_abc" not in response.text
+    assert len(fake.calls) == 1
+
+
+def test_timeout_is_a_kind_of_transcription_error() -> None:
+    # Implementations may raise either; callers catching TranscriptionError see both.
+    assert issubclass(TranscriptionTimeout, TranscriptionError)
