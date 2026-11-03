@@ -18,7 +18,7 @@
   - Add `parseTokenInput` for a pasted link or bare token.
 
   (03-C1)
-- [ ] Write tests, then extend `client.ts`:
+- [x] Write tests, then extend `client.ts`:
   - Send the `Authorization` header on protected calls.
   - Add `checkSession()` and `transcribe(blob)`, which sends the raw Blob.
   - Abort after 90s.
