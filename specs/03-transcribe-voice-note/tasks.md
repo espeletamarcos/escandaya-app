@@ -12,7 +12,7 @@
 - [x] Write tests with `caplog`, then add the `uvicorn.access` filter that strips query strings, and the endpoint log line (size, type, duration, status). Assert that the token and the transcript never appear in the logs (03-C8)
 
 ## Frontend
-- [ ] Write tests, then add `auth/token.ts`:
+- [x] Write tests, then add `auth/token.ts`:
   - Read `?token=` from the URL, store it in `localStorage` (replacing any older one) and remove it from the address bar.
   - Add `getToken`, `setToken` and `clearToken`, all safe if storage is unavailable.
   - Add `parseTokenInput` for a pasted link or bare token.
