@@ -1,3 +1,5 @@
+import logging
+import time
 from functools import lru_cache
 from typing import Annotated, Protocol
 
@@ -7,6 +9,8 @@ from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
 from backend.settings import Settings, get_settings
+
+logger = logging.getLogger(__name__)
 
 # Chrome records audio/webm, iOS Safari records audio/mp4.
 SUPPORTED_TYPES = frozenset({"audio/webm", "audio/mp4"})
@@ -99,8 +103,26 @@ def audio_type(content_type: Annotated[str | None, Header()] = None) -> str:
     """The base audio type of the request (codec parameters dropped), or 415."""
     base = (content_type or "").split(";", 1)[0].strip().lower()
     if base not in SUPPORTED_TYPES:
+        # The sent type is client-controlled text, so it is not logged.
+        log_transcription(415)
         raise HTTPException(status_code=415, detail="Unsupported audio type")
     return base
+
+
+def log_transcription(
+    status: int,
+    size: int | None = None,
+    content_type: str | None = None,
+    duration_ms: int | None = None,
+) -> None:
+    """The only log line for a transcription: never the audio, the text or the headers."""
+    logger.info(
+        "transcription status=%d bytes=%s type=%s duration_ms=%s",
+        status,
+        "-" if size is None else size,
+        content_type or "-",
+        "-" if duration_ms is None else duration_ms,
+    )
 
 
 class TranscriptionResponse(BaseModel):
@@ -118,13 +140,25 @@ async def create_transcription(
     content_type: Annotated[str, Depends(audio_type)],
     transcriber: Annotated[Transcriber, Depends(get_transcriber)],
 ) -> TranscriptionResponse:
-    audio = await read_audio(request)
+    try:
+        audio = await read_audio(request)
+    except HTTPException as error:
+        log_transcription(error.status_code, content_type=content_type)
+        raise
+
     # The transcriber blocks on a network call; keep it off the event loop.
     # Details are dropped (`from None`): provider messages may echo the key or request ids.
+    started = time.perf_counter()
+    status = 200
     try:
         text = await run_in_threadpool(transcriber.transcribe, audio, content_type)
     except TranscriptionTimeout:
+        status = 504
         raise HTTPException(status_code=504, detail="Transcription timed out") from None
     except TranscriptionError:
+        status = 502
         raise HTTPException(status_code=502, detail="Transcription failed") from None
+    finally:
+        duration_ms = round((time.perf_counter() - started) * 1000)
+        log_transcription(status, len(audio), content_type, duration_ms)
     return TranscriptionResponse(text=text)

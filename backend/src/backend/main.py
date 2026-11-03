@@ -6,6 +6,9 @@ from fastapi.responses import FileResponse
 
 from backend import transcription
 from backend.auth import require_token
+from backend.logs import configure_logging
+
+configure_logging()
 
 api = APIRouter(prefix="/api")
 protected = APIRouter(prefix="/api", dependencies=[Depends(require_token)])

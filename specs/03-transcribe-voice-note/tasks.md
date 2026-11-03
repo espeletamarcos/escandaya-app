@@ -9,7 +9,7 @@
 - [x] Write tests, then enforce the 5 MB cap with 413, checking `Content-Length` first and then the bytes as they are read (03-C6)
 - [x] Write tests, then map transcriber failures to 502 and timeouts to 504, with a generic `detail` that has no key and no provider message (03-C7)
 - [x] Implement `OpenAITranscriber`: `language="es"`, the configured model, a 60s timeout, SDK retries off, and an in-memory file whose extension matches the type (03-C5)
-- [ ] Write tests with `caplog`, then add the `uvicorn.access` filter that strips query strings, and the endpoint log line (size, type, duration, status). Assert that the token and the transcript never appear in the logs (03-C8)
+- [x] Write tests with `caplog`, then add the `uvicorn.access` filter that strips query strings, and the endpoint log line (size, type, duration, status). Assert that the token and the transcript never appear in the logs (03-C8)
 
 ## Frontend
 - [ ] Write tests, then add `auth/token.ts`:
