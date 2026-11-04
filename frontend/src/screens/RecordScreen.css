@@ -44,3 +44,45 @@
     box-shadow: 0 0 0 12px rgba(220, 38, 38, 0.2);
   }
 }
+
+.transcription {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.transcribe-button {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 2px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--text-h);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+}
+
+.transcript {
+  align-self: stretch;
+  margin: 0;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.transcript-empty {
+  margin: 0;
+  font-style: italic;
+}

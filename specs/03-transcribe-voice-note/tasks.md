@@ -28,7 +28,7 @@
   (03-C2, 03-C4, 03-C7)
 - [x] Write tests, then add `AccessScreen` and the session gate in `App`: show a loading state while checking, the block screen without a valid token, and unlock after pasting a valid link or token (03-C2)
 - [x] Write tests, then add `useTranscription`: pending, done and error states, ignore a second call while pending, and drop results for an outdated recording (03-C4, 03-C7, edge cases)
-- [ ] Write tests, then add the "Transcribir" button and the read-only text to `RecordScreen`:
+- [x] Write tests, then add the "Transcribir" button and the read-only text to `RecordScreen`:
   - Disable the button while pending.
   - Show readable error messages with retry.
   - Show "No se ha detectado voz" for empty text.

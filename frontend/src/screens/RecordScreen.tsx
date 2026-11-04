@@ -1,14 +1,26 @@
+import { transcribe as transcribeAudio } from "../api/client";
 import type { Recorder } from "../recorder/Recorder";
 import { useRecorder } from "../recorder/useRecorder";
+import { useTranscription, type TranscribeFn } from "../transcription/useTranscription";
 import "./RecordScreen.css";
 
 interface RecordScreenProps {
   recorder: Recorder;
+  /** Sends the audio for transcription; tests pass a fake. */
+  transcribe?: TranscribeFn;
 }
 
-function RecordScreen({ recorder }: RecordScreenProps) {
-  const { status, audioUrl, error, toggle } = useRecorder(recorder);
+function RecordScreen({ recorder, transcribe = transcribeAudio }: RecordScreenProps) {
+  const { status, audio, audioUrl, error, toggle } = useRecorder(recorder);
+  const transcription = useTranscription(transcribe);
   const recording = status === "recording";
+  const pending = transcription.status === "pending";
+
+  const onRecordClick = () => {
+    // A new recording replaces the old one, so its transcript no longer applies.
+    if (!recording) transcription.reset();
+    void toggle();
+  };
 
   return (
     <main className="record-screen">
@@ -16,13 +28,33 @@ function RecordScreen({ recorder }: RecordScreenProps) {
         type="button"
         className={recording ? "record-button recording" : "record-button"}
         aria-pressed={recording}
-        onClick={() => void toggle()}
+        onClick={onRecordClick}
       >
         {recording ? "Stop" : "Record"}
       </button>
       {recording && <p>Recording…</p>}
       {error && <p role="alert">{error}</p>}
       {audioUrl && <audio controls src={audioUrl} />}
+      {audio && !recording && (
+        <section className="transcription" aria-live="polite">
+          <button
+            type="button"
+            className="transcribe-button"
+            disabled={pending}
+            onClick={() => void transcription.transcribe(audio)}
+          >
+            Transcribir
+          </button>
+          {pending && <p>Transcribiendo…</p>}
+          {transcription.error && <p role="alert">{transcription.error}</p>}
+          {transcription.status === "done" &&
+            (transcription.text?.trim() ? (
+              <p className="transcript">{transcription.text}</p>
+            ) : (
+              <p className="transcript-empty">No se ha detectado voz</p>
+            ))}
+        </section>
+      )}
     </main>
   );
 }
