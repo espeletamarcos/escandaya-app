@@ -86,3 +86,14 @@
   margin: 0;
   font-style: italic;
 }
+
+.record-timer {
+  margin: 0;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.record-notice {
+  margin: 0;
+  text-align: center;
+}

@@ -35,7 +35,7 @@
   - Clear the text when a new recording starts.
 
   (03-C4, 03-C7)
-- [ ] Write tests with fake timers, then add the elapsed-time counter to `useRecorder` and the `0:45 / 2:00` display. At 2:00, stop by itself, keep the audio and show "Se ha alcanzado el límite de 2 minutos" (03-C6)
+- [x] Write tests with fake timers, then add the elapsed-time counter to `useRecorder` and the `0:45 / 2:00` display. At 2:00, stop by itself, keep the audio and show "Se ha alcanzado el límite de 2 minutos" (03-C6)
 - [ ] Translate all user-facing text, including the spec 01 messages, to Spanish, and update the existing tests to assert the Spanish strings (03-C11)
 
 ## Operations

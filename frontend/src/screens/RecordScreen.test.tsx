@@ -3,6 +3,7 @@ import { ApiError } from "../api/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeRecorder } from "../recorder/FakeRecorder";
 import { RecorderError } from "../recorder/Recorder";
+import { MAX_RECORDING_MS } from "../recorder/useRecorder";
 import RecordScreen from "./RecordScreen";
 
 describe("RecordScreen", () => {
@@ -179,6 +180,66 @@ describe("RecordScreen", () => {
       expect(
         screen.getByRole("button", { name: "Transcribir" }).hasAttribute("disabled"),
       ).toBe(false);
+    });
+  });
+
+  describe("recording time limit (03-C6)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    async function advance(ms: number) {
+      await act(() => vi.advanceTimersByTimeAsync(ms));
+    }
+
+    async function click(name: string) {
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name }));
+      });
+    }
+
+    it("shows the elapsed time against the limit while recording", async () => {
+      render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
+      await click("Record");
+      expect(screen.getByRole("timer").textContent).toBe("0:00 / 2:00");
+
+      await advance(45_000);
+      expect(screen.getByRole("timer").textContent).toBe("0:45 / 2:00");
+    });
+
+    it("hides the timer when not recording", async () => {
+      render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
+      expect(screen.queryByRole("timer")).toBeNull();
+      await click("Record");
+      await advance(5_000);
+      await click("Stop");
+      expect(screen.queryByRole("timer")).toBeNull();
+    });
+
+    it("stops at 2:00 with a notice, and keeps the recording ready to transcribe", async () => {
+      render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
+      await click("Record");
+      await advance(MAX_RECORDING_MS);
+
+      expect(screen.getByRole("button", { name: "Record" })).toBeDefined();
+      expect(screen.getByRole("status").textContent).toBe(
+        "Se ha alcanzado el límite de 2 minutos",
+      );
+      expect(document.querySelector("audio")?.getAttribute("src")).toBe("blob:fake-url");
+      expect(screen.getByRole("button", { name: "Transcribir" })).toBeDefined();
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
+
+    it("clears the notice when a new recording starts", async () => {
+      render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
+      await click("Record");
+      await advance(MAX_RECORDING_MS);
+      await click("Record");
+      expect(screen.queryByText("Se ha alcanzado el límite de 2 minutos")).toBeNull();
     });
   });
 });

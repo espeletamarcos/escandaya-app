@@ -1,6 +1,6 @@
 import { transcribe as transcribeAudio } from "../api/client";
 import type { Recorder } from "../recorder/Recorder";
-import { useRecorder } from "../recorder/useRecorder";
+import { formatDuration, MAX_RECORDING_MS, useRecorder } from "../recorder/useRecorder";
 import { useTranscription, type TranscribeFn } from "../transcription/useTranscription";
 import "./RecordScreen.css";
 
@@ -11,7 +11,7 @@ interface RecordScreenProps {
 }
 
 function RecordScreen({ recorder, transcribe = transcribeAudio }: RecordScreenProps) {
-  const { status, audio, audioUrl, error, toggle } = useRecorder(recorder);
+  const { status, audio, audioUrl, error, notice, elapsed, toggle } = useRecorder(recorder);
   const transcription = useTranscription(transcribe);
   const recording = status === "recording";
   const pending = transcription.status === "pending";
@@ -32,9 +32,21 @@ function RecordScreen({ recorder, transcribe = transcribeAudio }: RecordScreenPr
       >
         {recording ? "Stop" : "Record"}
       </button>
-      {recording && <p>Recording…</p>}
+      {recording && (
+        <>
+          <p>Recording…</p>
+          <p role="timer" className="record-timer">
+            {formatDuration(elapsed)} / {formatDuration(MAX_RECORDING_MS / 1000)}
+          </p>
+        </>
+      )}
       {error && <p role="alert">{error}</p>}
       {audioUrl && <audio controls src={audioUrl} />}
+      {notice && (
+        <p role="status" className="record-notice">
+          {notice}
+        </p>
+      )}
       {audio && !recording && (
         <section className="transcription" aria-live="polite">
           <button

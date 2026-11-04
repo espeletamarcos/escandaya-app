@@ -2,7 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeRecorder } from "./FakeRecorder";
 import { RecorderError } from "./Recorder";
-import { useRecorder } from "./useRecorder";
+import { formatDuration, MAX_RECORDING_MS, useRecorder } from "./useRecorder";
 
 describe("useRecorder", () => {
   beforeEach(() => {
@@ -162,5 +162,108 @@ describe("useRecorder", () => {
       expect(stop).not.toHaveBeenCalled();
       expect(result.current.status).toBe("idle");
     });
+  });
+
+  describe("recording time limit (03-C6)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    async function advance(ms: number) {
+      await act(() => vi.advanceTimersByTimeAsync(ms));
+    }
+
+    it("limits recordings to 2 minutes", () => {
+      expect(MAX_RECORDING_MS).toBe(120_000);
+    });
+
+    it("counts the elapsed seconds while recording", async () => {
+      const recorder = new FakeRecorder();
+      const { result } = renderHook(() => useRecorder(recorder));
+      expect(result.current.elapsed).toBe(0);
+
+      await act(() => result.current.toggle());
+      expect(result.current.elapsed).toBe(0);
+
+      await advance(45_000);
+      expect(result.current.elapsed).toBe(45);
+    });
+
+    it("stops by itself at 2:00, keeps the audio and shows a notice", async () => {
+      const recorder = new FakeRecorder();
+      const stop = vi.spyOn(recorder, "stop");
+      const { result } = renderHook(() => useRecorder(recorder));
+      await act(() => result.current.toggle());
+
+      await advance(MAX_RECORDING_MS - 1_000);
+      expect(result.current.status).toBe("recording");
+      expect(result.current.notice).toBeNull();
+
+      await advance(1_000);
+      expect(stop).toHaveBeenCalledTimes(1);
+      expect(result.current.status).toBe("idle");
+      expect(result.current.audio).toBeInstanceOf(Blob);
+      expect(result.current.audioUrl).toBe("blob:fake-url");
+      expect(result.current.error).toBeNull();
+      expect(result.current.notice).toBe("Se ha alcanzado el límite de 2 minutos");
+    });
+
+    it("does not stop again after a manual stop", async () => {
+      const recorder = new FakeRecorder();
+      const stop = vi.spyOn(recorder, "stop");
+      const { result } = renderHook(() => useRecorder(recorder));
+      await act(() => result.current.toggle());
+      await advance(30_000);
+      await act(() => result.current.toggle());
+
+      await advance(MAX_RECORDING_MS);
+      expect(stop).toHaveBeenCalledTimes(1);
+      expect(result.current.notice).toBeNull();
+    });
+
+    it("resets the counter and clears the notice on a new recording", async () => {
+      const recorder = new FakeRecorder();
+      const { result } = renderHook(() => useRecorder(recorder));
+      await act(() => result.current.toggle());
+      await advance(MAX_RECORDING_MS);
+      expect(result.current.notice).not.toBeNull();
+
+      await act(() => result.current.toggle());
+      expect(result.current.status).toBe("recording");
+      expect(result.current.elapsed).toBe(0);
+      expect(result.current.notice).toBeNull();
+
+      await advance(10_000);
+      expect(result.current.elapsed).toBe(10);
+    });
+
+    it("gives a new recording its own full 2 minutes", async () => {
+      const recorder = new FakeRecorder();
+      const { result } = renderHook(() => useRecorder(recorder));
+      await act(() => result.current.toggle());
+      await advance(90_000);
+      await act(() => result.current.toggle());
+
+      await act(() => result.current.toggle());
+      await advance(90_000);
+      expect(result.current.status).toBe("recording");
+    });
+  });
+});
+
+describe("formatDuration", () => {
+  it.each([
+    [0, "0:00"],
+    [5, "0:05"],
+    [45, "0:45"],
+    [60, "1:00"],
+    [119, "1:59"],
+    [120, "2:00"],
+  ])("formats %i seconds as %s", (seconds, expected) => {
+    expect(formatDuration(seconds)).toBe(expected);
   });
 });
