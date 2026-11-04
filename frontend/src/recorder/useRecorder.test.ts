@@ -77,7 +77,9 @@ describe("useRecorder", () => {
     const { result } = renderHook(() => useRecorder(recorder));
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
-    expect(result.current.error).toMatch(/permission/i);
+    expect(result.current.error).toBe(
+      "Se ha denegado el permiso del micrófono. Actívalo en los ajustes del navegador e inténtalo de nuevo.",
+    );
   });
 
   it("shows a readable message when there is no microphone (01-C4)", async () => {
@@ -85,7 +87,17 @@ describe("useRecorder", () => {
     const { result } = renderHook(() => useRecorder(recorder));
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
-    expect(result.current.error).toMatch(/microphone/i);
+    expect(result.current.error).toBe(
+      "No se ha encontrado ningún micrófono en este dispositivo.",
+    );
+  });
+
+  it("shows a readable message when the browser cannot record (01-C4)", async () => {
+    const recorder = new FakeRecorder(new RecorderError("unsupported", "Unsupported"));
+    const { result } = renderHook(() => useRecorder(recorder));
+    await act(() => result.current.toggle());
+    expect(result.current.status).toBe("idle");
+    expect(result.current.error).toBe("Este navegador no puede grabar audio.");
   });
 
   it("shows a generic message for unexpected errors (01-C4)", async () => {
@@ -94,7 +106,9 @@ describe("useRecorder", () => {
     const { result } = renderHook(() => useRecorder(recorder));
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
-    expect(result.current.error).toMatch(/try again/i);
+    expect(result.current.error).toBe(
+      "Algo ha fallado con la grabación. Inténtalo de nuevo.",
+    );
   });
 
   it("clears the error on the next attempt", async () => {
@@ -129,7 +143,9 @@ describe("useRecorder", () => {
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
     expect(result.current.audioUrl).toBeNull();
-    expect(result.current.error).toMatch(/no audio/i);
+    expect(result.current.error).toBe(
+      "No se ha captado audio. Graba un poco más e inténtalo de nuevo.",
+    );
   });
 
   describe("when the tab goes to the background", () => {

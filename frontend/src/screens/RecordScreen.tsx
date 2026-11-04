@@ -30,11 +30,11 @@ function RecordScreen({ recorder, transcribe = transcribeAudio }: RecordScreenPr
         aria-pressed={recording}
         onClick={onRecordClick}
       >
-        {recording ? "Stop" : "Record"}
+        {recording ? "Parar" : "Grabar"}
       </button>
       {recording && (
         <>
-          <p>Recording…</p>
+          <p>Grabando…</p>
           <p role="timer" className="record-timer">
             {formatDuration(elapsed)} / {formatDuration(MAX_RECORDING_MS / 1000)}
           </p>

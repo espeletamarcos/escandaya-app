@@ -42,7 +42,7 @@ function renderApp(session: SessionClient) {
   return render(<App session={session} recorder={new FakeRecorder()} />);
 }
 
-const recordButton = () => screen.findByRole("button", { name: "Record" });
+const recordButton = () => screen.findByRole("button", { name: "Grabar" });
 const blockScreen = () => screen.findByRole("heading", { name: "Acceso privado" });
 
 function paste(text: string) {
@@ -69,7 +69,7 @@ describe("App session gate (03-C2)", () => {
     renderApp(fake.session);
 
     expect(screen.getByRole("status").textContent).toBe("Comprobando acceso…");
-    expect(screen.queryByRole("button", { name: "Record" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Grabar" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Acceso privado" })).toBeNull();
 
     await act(async () => pending.resolve(true));
@@ -97,7 +97,7 @@ describe("App session gate (03-C2)", () => {
 
     await blockScreen();
     expect(screen.getByText(/enlace privado/)).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Record" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Grabar" })).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -154,7 +154,7 @@ describe("App session gate (03-C2)", () => {
     fake.revoke();
 
     await blockScreen();
-    expect(screen.queryByRole("button", { name: "Record" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Grabar" })).toBeNull();
   });
 
   it("stops listening for 401s when it unmounts", async () => {
@@ -181,7 +181,7 @@ describe("App session gate (03-C2)", () => {
     await recordButton();
     await act(async () => first.resolve(false));
 
-    expect(screen.getByRole("button", { name: "Record" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Grabar" })).toBeDefined();
   });
 });
 

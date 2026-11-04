@@ -20,16 +20,16 @@ function errorMessage(error: unknown): string {
   if (error instanceof RecorderError) {
     switch (error.code) {
       case "permission-denied":
-        return "Microphone permission was denied. Allow it in the browser settings and try again.";
+        return "Se ha denegado el permiso del micrófono. Actívalo en los ajustes del navegador e inténtalo de nuevo.";
       case "no-microphone":
-        return "No microphone was found on this device.";
+        return "No se ha encontrado ningún micrófono en este dispositivo.";
       case "unsupported":
-        return "This browser cannot record audio.";
+        return "Este navegador no puede grabar audio.";
       case "empty-recording":
-        return "No audio was captured. Hold on a little longer and try again.";
+        return "No se ha captado audio. Graba un poco más e inténtalo de nuevo.";
     }
   }
-  return "Something went wrong with the recording. Please try again.";
+  return "Algo ha fallado con la grabación. Inténtalo de nuevo.";
 }
 
 export function useRecorder(recorder: Recorder) {

@@ -11,7 +11,8 @@ export default defineConfig({
       manifest: {
         name: "Escandaya",
         short_name: "Escandaya",
-        description: "Voice recipe sheets with cost per cover",
+        lang: "es",
+        description: "Escandallos por voz con coste por ración",
         display: "standalone",
         start_url: "/",
         theme_color: "#1f2937",

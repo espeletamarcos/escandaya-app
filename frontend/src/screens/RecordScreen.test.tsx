@@ -20,23 +20,23 @@ describe("RecordScreen", () => {
 
   it("shows a record button and no player at first", () => {
     render(<RecordScreen recorder={new FakeRecorder()} />);
-    expect(screen.getByRole("button", { name: "Record" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Grabar" })).toBeDefined();
     expect(document.querySelector("audio")).toBeNull();
   });
 
   it("shows the recording state after pressing the button (01-C1)", async () => {
     render(<RecordScreen recorder={new FakeRecorder()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Record" }));
-    const stop = await screen.findByRole("button", { name: "Stop" });
+    fireEvent.click(screen.getByRole("button", { name: "Grabar" }));
+    const stop = await screen.findByRole("button", { name: "Parar" });
     expect(stop.getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByText("Recording…")).toBeDefined();
+    expect(screen.getByText("Grabando…")).toBeDefined();
   });
 
   it("shows a player with the recording after stopping (01-C2)", async () => {
     render(<RecordScreen recorder={new FakeRecorder()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Record" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Stop" }));
-    await screen.findByRole("button", { name: "Record" });
+    fireEvent.click(screen.getByRole("button", { name: "Grabar" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Parar" }));
+    await screen.findByRole("button", { name: "Grabar" });
     const audio = document.querySelector("audio");
     expect(audio?.getAttribute("src")).toBe("blob:fake-url");
     expect(audio?.hasAttribute("controls")).toBe(true);
@@ -45,10 +45,12 @@ describe("RecordScreen", () => {
   it("shows the error message when the microphone is not available (01-C4)", async () => {
     const recorder = new FakeRecorder(new RecorderError("no-microphone", "None"));
     render(<RecordScreen recorder={recorder} />);
-    fireEvent.click(screen.getByRole("button", { name: "Record" }));
+    fireEvent.click(screen.getByRole("button", { name: "Grabar" }));
     const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toMatch(/microphone/i);
-    expect(screen.getByRole("button", { name: "Record" })).toBeDefined();
+    expect(alert.textContent).toBe(
+      "No se ha encontrado ningún micrófono en este dispositivo.",
+    );
+    expect(screen.getByRole("button", { name: "Grabar" })).toBeDefined();
   });
 
   describe("transcription", () => {
@@ -68,9 +70,9 @@ describe("RecordScreen", () => {
     }
 
     async function record() {
-      fireEvent.click(screen.getByRole("button", { name: "Record" }));
-      fireEvent.click(await screen.findByRole("button", { name: "Stop" }));
-      await screen.findByRole("button", { name: "Record" });
+      fireEvent.click(screen.getByRole("button", { name: "Grabar" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Parar" }));
+      await screen.findByRole("button", { name: "Grabar" });
     }
 
     it("shows no transcribe button before anything is recorded", () => {
@@ -81,8 +83,8 @@ describe("RecordScreen", () => {
     it("hides the transcribe button while recording", async () => {
       render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
       await record();
-      fireEvent.click(screen.getByRole("button", { name: "Record" }));
-      await screen.findByRole("button", { name: "Stop" });
+      fireEvent.click(screen.getByRole("button", { name: "Grabar" }));
+      await screen.findByRole("button", { name: "Parar" });
       expect(screen.queryByRole("button", { name: "Transcribir" })).toBeNull();
     });
 
@@ -162,8 +164,8 @@ describe("RecordScreen", () => {
       fireEvent.click(screen.getByRole("button", { name: "Transcribir" }));
       await screen.findByText("texto viejo");
 
-      fireEvent.click(screen.getByRole("button", { name: "Record" }));
-      await screen.findByRole("button", { name: "Stop" });
+      fireEvent.click(screen.getByRole("button", { name: "Grabar" }));
+      await screen.findByRole("button", { name: "Parar" });
       expect(screen.queryByText("texto viejo")).toBeNull();
     });
 
@@ -204,7 +206,7 @@ describe("RecordScreen", () => {
 
     it("shows the elapsed time against the limit while recording", async () => {
       render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
-      await click("Record");
+      await click("Grabar");
       expect(screen.getByRole("timer").textContent).toBe("0:00 / 2:00");
 
       await advance(45_000);
@@ -214,18 +216,18 @@ describe("RecordScreen", () => {
     it("hides the timer when not recording", async () => {
       render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
       expect(screen.queryByRole("timer")).toBeNull();
-      await click("Record");
+      await click("Grabar");
       await advance(5_000);
-      await click("Stop");
+      await click("Parar");
       expect(screen.queryByRole("timer")).toBeNull();
     });
 
     it("stops at 2:00 with a notice, and keeps the recording ready to transcribe", async () => {
       render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
-      await click("Record");
+      await click("Grabar");
       await advance(MAX_RECORDING_MS);
 
-      expect(screen.getByRole("button", { name: "Record" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Grabar" })).toBeDefined();
       expect(screen.getByRole("status").textContent).toBe(
         "Se ha alcanzado el límite de 2 minutos",
       );
@@ -236,9 +238,9 @@ describe("RecordScreen", () => {
 
     it("clears the notice when a new recording starts", async () => {
       render(<RecordScreen recorder={new FakeRecorder()} transcribe={vi.fn()} />);
-      await click("Record");
+      await click("Grabar");
       await advance(MAX_RECORDING_MS);
-      await click("Record");
+      await click("Grabar");
       expect(screen.queryByText("Se ha alcanzado el límite de 2 minutos")).toBeNull();
     });
   });
