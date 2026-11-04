@@ -40,7 +40,7 @@
 
 ## Operations
 - [x] Extend `scripts/smoke.sh` to also check that `GET /api/session` without a token returns 401 (03-C3)
-- [ ] Write `scripts/transcribe_trial.py`: send every recording in a given folder to each candidate model and print the texts side by side (03-C9)
+- [x] Write `scripts/transcribe_trial.py`: send every recording in a given folder to each candidate model and print the texts side by side (03-C9)
 - [ ] Set the $5/month spending caps in the OpenAI and Anthropic consoles, and set `OPENAI_API_KEY` and `ACCESS_TOKENS` as Fly secrets (03-C10, manual)
 - [ ] Document in `README.MD`:
   - Generating, setting, linking and revoking tokens.
