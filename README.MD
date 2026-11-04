@@ -26,6 +26,6 @@ To deploy by hand:
     curl -L https://fly.io/install.sh | sh   # install flyctl once
     fly auth login
     fly deploy --ha=false                    # one machine
-    scripts/smoke.sh                         # checks /api/health on the live URL
+    scripts/smoke.sh                         # checks /api/health, and that /api/session needs a token, on the live URL
 
 The machine stops when idle, so the first request after a pause is slow (a few seconds).
