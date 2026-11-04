@@ -21,6 +21,7 @@ function errorMessage(error: unknown): string {
 
 export function useRecorder(recorder: Recorder) {
   const [status, setStatus] = useState<RecorderStatus>("idle");
+  const [audio, setAudio] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const currentUrl = useRef<string | null>(null);
@@ -35,6 +36,7 @@ export function useRecorder(recorder: Recorder) {
         const blob = await recorder.stop();
         if (currentUrl.current) URL.revokeObjectURL(currentUrl.current);
         currentUrl.current = URL.createObjectURL(blob);
+        setAudio(blob);
         setAudioUrl(currentUrl.current);
         setStatus("idle");
       } else {
@@ -59,5 +61,5 @@ export function useRecorder(recorder: Recorder) {
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [status, toggle]);
 
-  return { status, audioUrl, error, toggle };
+  return { status, audio, audioUrl, error, toggle };
 }

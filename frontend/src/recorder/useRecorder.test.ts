@@ -19,6 +19,7 @@ describe("useRecorder", () => {
     const recorder = new FakeRecorder();
     const { result } = renderHook(() => useRecorder(recorder));
     expect(result.current.status).toBe("idle");
+    expect(result.current.audio).toBeNull();
     expect(result.current.audioUrl).toBeNull();
   });
 
@@ -37,6 +38,15 @@ describe("useRecorder", () => {
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
     expect(result.current.audioUrl).toBe("blob:fake-url");
+  });
+
+  it("keeps the recorded blob so it can be transcribed", async () => {
+    const recorder = new FakeRecorder();
+    const { result } = renderHook(() => useRecorder(recorder));
+    await act(() => result.current.toggle());
+    await act(() => result.current.toggle());
+    expect(result.current.audio).toBeInstanceOf(Blob);
+    expect(result.current.audio?.type).toBe("audio/webm");
   });
 
   it("does not revoke anything after the first recording", async () => {
