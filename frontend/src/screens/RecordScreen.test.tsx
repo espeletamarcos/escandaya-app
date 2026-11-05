@@ -113,9 +113,34 @@ describe("RecordScreen", () => {
       const transcript = await screen.findByText("200 g de harina y 3 huevos");
       expect(transcript.tagName).toBe("P");
       expect(screen.queryByText("Transcribiendo…")).toBeNull();
-      expect(
-        screen.getByRole("button", { name: "Transcribir" }).hasAttribute("disabled"),
-      ).toBe(false);
+    });
+
+    it("keeps the button disabled once the recording has its text (03-C4)", async () => {
+      const transcribe = vi.fn().mockResolvedValue("200 g de harina");
+      render(<RecordScreen recorder={new FakeRecorder()} transcribe={transcribe} />);
+      await record();
+      fireEvent.click(screen.getByRole("button", { name: "Transcribir" }));
+      await screen.findByText("200 g de harina");
+
+      const button = screen.getByRole("button", { name: "Transcribir" });
+      expect(button.hasAttribute("disabled")).toBe(true);
+      fireEvent.click(button);
+      expect(transcribe).toHaveBeenCalledTimes(1);
+    });
+
+    it("enables the button again for a new recording", async () => {
+      const transcribe = vi.fn().mockResolvedValue("texto");
+      render(<RecordScreen recorder={new FakeRecorder()} transcribe={transcribe} />);
+      await record();
+      fireEvent.click(screen.getByRole("button", { name: "Transcribir" }));
+      await screen.findByText("texto");
+
+      await record();
+
+      const button = screen.getByRole("button", { name: "Transcribir" });
+      expect(button.hasAttribute("disabled")).toBe(false);
+      fireEvent.click(button);
+      expect(transcribe).toHaveBeenCalledTimes(2);
     });
 
     it.each(["", "   "])(
@@ -126,6 +151,10 @@ describe("RecordScreen", () => {
         await record();
         fireEvent.click(screen.getByRole("button", { name: "Transcribir" }));
         expect(await screen.findByText("No se ha detectado voz")).toBeDefined();
+        // Silent audio will not improve on a second try.
+        expect(
+          screen.getByRole("button", { name: "Transcribir" }).hasAttribute("disabled"),
+        ).toBe(true);
       },
     );
 
@@ -142,7 +171,9 @@ describe("RecordScreen", () => {
       expect(alert.textContent).toMatch(/conexión/i);
       expect(document.querySelector("audio")?.getAttribute("src")).toBe("blob:fake-url");
 
-      fireEvent.click(screen.getByRole("button", { name: "Transcribir" }));
+      const button = screen.getByRole("button", { name: "Transcribir" });
+      expect(button.hasAttribute("disabled")).toBe(false);
+      fireEvent.click(button);
       expect(await screen.findByText("texto de la receta")).toBeDefined();
       expect(screen.queryByRole("alert")).toBeNull();
       expect(transcribe).toHaveBeenCalledTimes(2);

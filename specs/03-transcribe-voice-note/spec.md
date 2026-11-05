@@ -37,7 +37,7 @@ Each one must be checkable with a test or a manual check.
 - **03-C1**: Opening the app from `/?token=X` stores `X`, removes the token from the address bar, and later opens without the parameter keep working (unit test; manual check on a real phone, including the installed PWA).
 - **03-C2**: When the app opens it calls `GET /api/session`. If there is no stored token, or the backend answers 401, the stored token is cleared and a block screen says to open the app from the private link. Pasting a valid link or token in the block screen field unlocks the app (unit tests with a fake API client).
 - **03-C3**: Every `/api` route except `/api/health` returns 401 without a valid token. Each token in the configured list is accepted. If the list is empty or unset, every protected route returns 401. `/api/health` and the static frontend stay public (pytest).
-- **03-C4**: After stopping a recording, a "Transcribe" button appears. Pressing it sends the audio with the token through `client.ts`. While waiting, a pending state is shown and the button is disabled. When the response arrives, the text is shown read-only under the player (frontend tests).
+- **03-C4**: After stopping a recording, a "Transcribe" button appears. Pressing it sends the audio with the token through `client.ts`. While waiting, a pending state is shown and the button is disabled. When the response arrives, the text is shown read-only under the player, and the button stays disabled until a new recording, so the same audio is not transcribed (and paid for) twice (frontend tests).
 - **03-C5**: The backend endpoint accepts both `audio/webm` (Chrome) and `audio/mp4` (iOS Safari) and calls the `Transcriber` with language `es` and the model from the environment variable. Tests use a fake `Transcriber`: no test and no CI run calls OpenAI (pytest).
 - **03-C6**: Recording stops by itself at 2:00 with a visible notice, and the audio is kept. The backend rejects uploads above the size cap with 413, and the app shows a readable message (frontend test and pytest).
 - **03-C7**: If transcription fails (OpenAI error, timeout or network error), the app shows a readable message, keeps the recording, and lets the chef press "Transcribe" again. Backend error responses do not include the API key or provider internals (frontend test and pytest with a failing fake).
@@ -49,6 +49,7 @@ Each one must be checkable with a test or a manual check.
 ## Edge cases
 - A new recording replaces the previous one and clears its transcript. If a transcription for the old recording is still running, its result is ignored when it arrives.
 - Pressing "Transcribe" twice quickly sends only one request.
+- After a successful transcription, including the "No se ha detectado voz" case, "Transcribe" stays disabled until a new recording starts. After an error it stays enabled, so the chef can retry (03-C7).
 - Silent or near-empty audio: the API may return empty text. Show "No se ha detectado voz" instead of an empty area.
 - Cold start on Fly after idle: the first request can take tens of seconds. The client timeout must allow for it, and a slow response must not be shown as a failure before the timeout.
 - The tab goes to the background while a transcription is running: the result is shown when the chef returns, or the error from 03-C7 if the request failed.

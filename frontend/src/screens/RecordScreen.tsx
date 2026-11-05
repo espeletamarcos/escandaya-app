@@ -15,6 +15,8 @@ function RecordScreen({ recorder, transcribe = transcribeAudio }: RecordScreenPr
   const transcription = useTranscription(transcribe);
   const recording = status === "recording";
   const pending = transcription.status === "pending";
+  // Each recording is transcribed at most once; after an error it can be retried.
+  const transcribed = transcription.status === "done";
 
   const onRecordClick = () => {
     // A new recording replaces the old one, so its transcript no longer applies.
@@ -52,7 +54,7 @@ function RecordScreen({ recorder, transcribe = transcribeAudio }: RecordScreenPr
           <button
             type="button"
             className="transcribe-button"
-            disabled={pending}
+            disabled={pending || transcribed}
             onClick={() => void transcription.transcribe(audio)}
           >
             Transcribir
