@@ -54,15 +54,24 @@
   (03-C10)
 
 ## Manual checks
-- [ ] Record real 2:00 notes on Android and iOS, measure their size, and confirm or adjust the 5 MB cap; note results here (03-C6)
-- [ ] Run the model trial on real kitchen recordings, choose the model, set `TRANSCRIPTION_MODEL` on Fly and record the choice in `docs/product/stack.md`; note results here (03-C9)
-- [ ] On the deployed app, on Android Chrome and iOS Safari:
+- [x] Record real 2:00 notes on iOS, measure their size, and confirm or adjust the 5 MB cap; note results here (03-C6)
+  - 2026-11-05, iPhone (Safari): a 2:00 note is 3,205,451 bytes (about 3.06 MB), measured from the `bytes=` log line. Safari recorded `audio/webm` (Opus), not `audio/mp4`, because it now supports WebM and that format comes first in `BrowserRecorder`.
+  - The 5 MB cap is kept, with about 40% headroom.
+- [x] Run the model trial on real kitchen recordings, choose the model, set `TRANSCRIPTION_MODEL` on Fly and record the choice in `docs/product/stack.md`; note results here (03-C9)
+  - 2026-11-05: chose `gpt-4o-mini-transcribe`, recorded in `docs/product/stack.md`. It is the default of `TRANSCRIPTION_MODEL`.
+- [x] On the deployed app, on iOS Safari:
   - Open from the private link and check that the token disappears from the address bar.
   - Reopen without it.
   - Check the installed PWA, using the paste field if it is blocked.
   - Check that a wrong token shows the block screen.
 
   Note results here (03-C1, 03-C2)
-- [ ] On the deployed app, on both phones: dictate a real preparation in Spanish, transcribe it, and check that the text is recognisable. Also check the 2:00 auto-stop, and the error message with retry (for example, in airplane mode). Note results here (03-C4, 03-C6, 03-C7, 03-C9)
-- [ ] Check `fly logs` after opening the private link and transcribing: no token and no transcript text in the logs (03-C8)
+  - 2026-11-05, iPhone: opening from the private link in Safari works, and the token disappears from the address bar. Reopening without it goes straight in. A wrong token (`?token=nope`) shows the "Acceso privado" block screen. The installed PWA did not share the token with Safari and showed the block screen. After pasting the token it unlocked, and later opens of the PWA work without pasting again.
+- [ ] On the deployed app, on the iPhone: dictate a real preparation in Spanish, transcribe it, and check that the text is recognisable. Also check the 2:00 auto-stop, and the error message with retry (for example, in airplane mode). Note results here (03-C4, 03-C6, 03-C7, 03-C9)
+  - 2026-11-05: a dictated preparation comes back as recognisable Spanish text, and the recording stops by itself at 2:00.
+  - Error with retry in airplane mode: not checked yet.
+- [ ] On a real Android phone with Chrome, when one is available: the access steps above (including installing the PWA), a dictation, the 2:00 auto-stop with its size in `fly logs`, and the error with retry. Note results here (03-C1, 03-C2, 03-C4, 03-C6, 03-C7, 03-C9)
+  - 2026-11-05: no Android device available. The app works on desktop Chrome, which uses the same engine and recording format. The chef uses an iPhone.
+- [x] Check `fly logs` after opening the private link and transcribing: no token and no transcript text in the logs (03-C8)
+  - 2026-11-05: the visit from the private link is logged as `GET /` with no query string. The transcription is logged only as `transcription status=200 bytes=306456 type=audio/webm duration_ms=1749`. No token and no transcript text appear in the logs.
 - [ ] Update the status of spec 03 in `specs/README.md` as it moves to `in progress` and `implemented`

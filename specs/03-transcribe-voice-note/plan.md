@@ -98,6 +98,7 @@ Mapping to criteria:
 ## Risks
 - **New dependency:** `openai` (approved here). No change to CI is needed, because tests never call the real API.
 - **iOS `audio/mp4` and the API:** the format is accepted on paper, but iOS sometimes writes MP4 variants the API rejects. The phone check in 03-C9 is where this shows up. If it fails, update the spec before changing the recording format.
+  - Result: the iPhone tested on 2026-11-05 recorded `audio/webm`, so the MP4 path is still untested on a real phone. Only older iOS versions use it, and pytest covers it on the backend.
 - **iOS home-screen PWA storage:** the installed app may not see the token saved in Safari. The paste field covers it, but the chef must have the link at hand once.
 - **Token in browser history:** `replaceState` removes it from the address bar, but the first visit may still be in the browser history. This is acceptable for a private phone, and documented in the README.
 - **Header leaks:** the token travels in a header that uvicorn does not log, but any future middleware that logs headers would leak it. A test that asserts the token is not in the logs guards against this.

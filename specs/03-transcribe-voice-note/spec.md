@@ -1,6 +1,6 @@
 # 03 – Transcribe a voice note
 
-Status: approved
+Status: in progress
 
 ## Why
 The chef already records on the phone (spec 01, deployed in spec 02), but the audio goes nowhere. This spec sends a recording to the backend and shows the Spanish text, so we learn whether transcription is accurate enough in a real kitchen before building the recipe sheet on top of it (spec 04). This is the first spec that spends money on an external API, so it also adds minimal protection: a private link with an access token, and spending caps in the provider consoles.
@@ -38,13 +38,15 @@ Each one must be checkable with a test or a manual check.
 - **03-C2**: When the app opens it calls `GET /api/session`. If there is no stored token, or the backend answers 401, the stored token is cleared and a block screen says to open the app from the private link. Pasting a valid link or token in the block screen field unlocks the app (unit tests with a fake API client).
 - **03-C3**: Every `/api` route except `/api/health` returns 401 without a valid token. Each token in the configured list is accepted. If the list is empty or unset, every protected route returns 401. `/api/health` and the static frontend stay public (pytest).
 - **03-C4**: After stopping a recording, a "Transcribe" button appears. Pressing it sends the audio with the token through `client.ts`. While waiting, a pending state is shown and the button is disabled. When the response arrives, the text is shown read-only under the player, and the button stays disabled until a new recording, so the same audio is not transcribed (and paid for) twice (frontend tests).
-- **03-C5**: The backend endpoint accepts both `audio/webm` (Chrome) and `audio/mp4` (iOS Safari) and calls the `Transcriber` with language `es` and the model from the environment variable. Tests use a fake `Transcriber`: no test and no CI run calls OpenAI (pytest).
+- **03-C5**: The backend endpoint accepts both `audio/webm` (Chrome, and recent iOS Safari) and `audio/mp4` (older iOS Safari) and calls the `Transcriber` with language `es` and the model from the environment variable. Tests use a fake `Transcriber`: no test and no CI run calls OpenAI (pytest).
 - **03-C6**: Recording stops by itself at 2:00 with a visible notice, and the audio is kept. The backend rejects uploads above the size cap with 413, and the app shows a readable message (frontend test and pytest).
 - **03-C7**: If transcription fails (OpenAI error, timeout or network error), the app shows a readable message, keeps the recording, and lets the chef press "Transcribe" again. Backend error responses do not include the API key or provider internals (frontend test and pytest with a failing fake).
 - **03-C8**: Neither the token nor the transcript text is written to the server logs. Audio and text are not written to disk. Logs only record size, duration of the call and status (pytest capturing logs, including the access log for a request to `/?token=X`).
 - **03-C9**: On the deployed app, a preparation dictated in Spanish on Android Chrome and iOS Safari comes back as recognisable text. The chosen model is recorded in `docs/product/stack.md` (manual check with real voice notes).
 - **03-C10**: A $5/month spending cap is set in the OpenAI and Anthropic consoles. The OpenAI key and the tokens exist only as Fly secrets. The README documents the caps and how to issue and revoke a token (manual check).
 - **03-C11**: All user-facing text is in Spanish: labels, states and error messages, including the ones from spec 01 (frontend tests assert the Spanish text).
+
+The chef uses an iPhone, so the phone checks in 03-C1 and 03-C9 are done first on a real iPhone. The Android Chrome checks stay pending until an Android device is available; meanwhile the app is checked on desktop Chrome, which uses the same engine and records the same format (`audio/webm;codecs=opus`).
 
 ## Edge cases
 - A new recording replaces the previous one and clears its transcript. If a transcription for the old recording is still running, its result is ignored when it arrives.

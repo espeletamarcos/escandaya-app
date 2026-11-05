@@ -60,5 +60,7 @@ Also: API keys only in backend environment variables, and neutral domain names (
   - Fly.io, app `escandaya`, region `cdg`.
 - [x] How front and back talk in production: same domain or CORS on the backend. The Vite proxy only exists in development.
   - FastAPI serves the built frontend and the API under `/api`, so no CORS is needed.
-- [ ] Specific transcription and Claude models, after testing with real voice notes.
+- [x] Transcription model, after testing with real voice notes (spec 03).
+  - `gpt-4o-mini-transcribe`, the default of `TRANSCRIPTION_MODEL`.
+- [ ] Claude model, after testing with real voice notes (spec 04).
 - [ ] Replace `httpx` with the client Starlette recommends in tests, when the deprecation warning requires it.

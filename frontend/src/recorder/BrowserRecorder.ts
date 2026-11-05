@@ -1,6 +1,6 @@
 import { RecorderError, type Recorder } from "./Recorder";
 
-// iOS Safari records mp4, Chrome and Firefox record webm.
+// Chrome, Firefox and recent iOS Safari record webm; older iOS Safari only records mp4.
 const MIME_TYPES = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"];
 
 export class BrowserRecorder implements Recorder {
