@@ -1,15 +1,30 @@
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
+from backend import transcription
+from backend.auth import require_token
+from backend.logs import configure_logging
+
+configure_logging()
+
 api = APIRouter(prefix="/api")
+protected = APIRouter(prefix="/api", dependencies=[Depends(require_token)])
 
 
 @api.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@protected.get("/session", status_code=204)
+def session() -> None:
+    """Lets the app check its stored token on open."""
+
+
+protected.include_router(transcription.router)
 
 
 def default_static_dir() -> Path | None:
@@ -22,6 +37,7 @@ def default_static_dir() -> Path | None:
 def create_app(static_dir: Path | None) -> FastAPI:
     app = FastAPI()
     app.include_router(api)
+    app.include_router(protected)
 
     if static_dir is not None:
         root = static_dir.resolve()

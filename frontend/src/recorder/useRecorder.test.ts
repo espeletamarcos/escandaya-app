@@ -2,7 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeRecorder } from "./FakeRecorder";
 import { RecorderError } from "./Recorder";
-import { useRecorder } from "./useRecorder";
+import { formatDuration, MAX_RECORDING_MS, useRecorder } from "./useRecorder";
 
 describe("useRecorder", () => {
   beforeEach(() => {
@@ -19,6 +19,7 @@ describe("useRecorder", () => {
     const recorder = new FakeRecorder();
     const { result } = renderHook(() => useRecorder(recorder));
     expect(result.current.status).toBe("idle");
+    expect(result.current.audio).toBeNull();
     expect(result.current.audioUrl).toBeNull();
   });
 
@@ -37,6 +38,15 @@ describe("useRecorder", () => {
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
     expect(result.current.audioUrl).toBe("blob:fake-url");
+  });
+
+  it("keeps the recorded blob so it can be transcribed", async () => {
+    const recorder = new FakeRecorder();
+    const { result } = renderHook(() => useRecorder(recorder));
+    await act(() => result.current.toggle());
+    await act(() => result.current.toggle());
+    expect(result.current.audio).toBeInstanceOf(Blob);
+    expect(result.current.audio?.type).toBe("audio/webm");
   });
 
   it("does not revoke anything after the first recording", async () => {
@@ -67,7 +77,9 @@ describe("useRecorder", () => {
     const { result } = renderHook(() => useRecorder(recorder));
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
-    expect(result.current.error).toMatch(/permission/i);
+    expect(result.current.error).toBe(
+      "Se ha denegado el permiso del micrófono. Actívalo en los ajustes del navegador e inténtalo de nuevo.",
+    );
   });
 
   it("shows a readable message when there is no microphone (01-C4)", async () => {
@@ -75,7 +87,17 @@ describe("useRecorder", () => {
     const { result } = renderHook(() => useRecorder(recorder));
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
-    expect(result.current.error).toMatch(/microphone/i);
+    expect(result.current.error).toBe(
+      "No se ha encontrado ningún micrófono en este dispositivo.",
+    );
+  });
+
+  it("shows a readable message when the browser cannot record (01-C4)", async () => {
+    const recorder = new FakeRecorder(new RecorderError("unsupported", "Unsupported"));
+    const { result } = renderHook(() => useRecorder(recorder));
+    await act(() => result.current.toggle());
+    expect(result.current.status).toBe("idle");
+    expect(result.current.error).toBe("Este navegador no puede grabar audio.");
   });
 
   it("shows a generic message for unexpected errors (01-C4)", async () => {
@@ -84,7 +106,9 @@ describe("useRecorder", () => {
     const { result } = renderHook(() => useRecorder(recorder));
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
-    expect(result.current.error).toMatch(/try again/i);
+    expect(result.current.error).toBe(
+      "Algo ha fallado con la grabación. Inténtalo de nuevo.",
+    );
   });
 
   it("clears the error on the next attempt", async () => {
@@ -119,7 +143,9 @@ describe("useRecorder", () => {
     await act(() => result.current.toggle());
     expect(result.current.status).toBe("idle");
     expect(result.current.audioUrl).toBeNull();
-    expect(result.current.error).toMatch(/no audio/i);
+    expect(result.current.error).toBe(
+      "No se ha captado audio. Graba un poco más e inténtalo de nuevo.",
+    );
   });
 
   describe("when the tab goes to the background", () => {
@@ -152,5 +178,108 @@ describe("useRecorder", () => {
       expect(stop).not.toHaveBeenCalled();
       expect(result.current.status).toBe("idle");
     });
+  });
+
+  describe("recording time limit (03-C6)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    async function advance(ms: number) {
+      await act(() => vi.advanceTimersByTimeAsync(ms));
+    }
+
+    it("limits recordings to 2 minutes", () => {
+      expect(MAX_RECORDING_MS).toBe(120_000);
+    });
+
+    it("counts the elapsed seconds while recording", async () => {
+      const recorder = new FakeRecorder();
+      const { result } = renderHook(() => useRecorder(recorder));
+      expect(result.current.elapsed).toBe(0);
+
+      await act(() => result.current.toggle());
+      expect(result.current.elapsed).toBe(0);
+
+      await advance(45_000);
+      expect(result.current.elapsed).toBe(45);
+    });
+
+    it("stops by itself at 2:00, keeps the audio and shows a notice", async () => {
+      const recorder = new FakeRecorder();
+      const stop = vi.spyOn(recorder, "stop");
+      const { result } = renderHook(() => useRecorder(recorder));
+      await act(() => result.current.toggle());
+
+      await advance(MAX_RECORDING_MS - 1_000);
+      expect(result.current.status).toBe("recording");
+      expect(result.current.notice).toBeNull();
+
+      await advance(1_000);
+      expect(stop).toHaveBeenCalledTimes(1);
+      expect(result.current.status).toBe("idle");
+      expect(result.current.audio).toBeInstanceOf(Blob);
+      expect(result.current.audioUrl).toBe("blob:fake-url");
+      expect(result.current.error).toBeNull();
+      expect(result.current.notice).toBe("Se ha alcanzado el límite de 2 minutos");
+    });
+
+    it("does not stop again after a manual stop", async () => {
+      const recorder = new FakeRecorder();
+      const stop = vi.spyOn(recorder, "stop");
+      const { result } = renderHook(() => useRecorder(recorder));
+      await act(() => result.current.toggle());
+      await advance(30_000);
+      await act(() => result.current.toggle());
+
+      await advance(MAX_RECORDING_MS);
+      expect(stop).toHaveBeenCalledTimes(1);
+      expect(result.current.notice).toBeNull();
+    });
+
+    it("resets the counter and clears the notice on a new recording", async () => {
+      const recorder = new FakeRecorder();
+      const { result } = renderHook(() => useRecorder(recorder));
+      await act(() => result.current.toggle());
+      await advance(MAX_RECORDING_MS);
+      expect(result.current.notice).not.toBeNull();
+
+      await act(() => result.current.toggle());
+      expect(result.current.status).toBe("recording");
+      expect(result.current.elapsed).toBe(0);
+      expect(result.current.notice).toBeNull();
+
+      await advance(10_000);
+      expect(result.current.elapsed).toBe(10);
+    });
+
+    it("gives a new recording its own full 2 minutes", async () => {
+      const recorder = new FakeRecorder();
+      const { result } = renderHook(() => useRecorder(recorder));
+      await act(() => result.current.toggle());
+      await advance(90_000);
+      await act(() => result.current.toggle());
+
+      await act(() => result.current.toggle());
+      await advance(90_000);
+      expect(result.current.status).toBe("recording");
+    });
+  });
+});
+
+describe("formatDuration", () => {
+  it.each([
+    [0, "0:00"],
+    [5, "0:05"],
+    [45, "0:45"],
+    [60, "1:00"],
+    [119, "1:59"],
+    [120, "2:00"],
+  ])("formats %i seconds as %s", (seconds, expected) => {
+    expect(formatDuration(seconds)).toBe(expected);
   });
 });
