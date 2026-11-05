@@ -39,7 +39,7 @@
    - It exposes `status` (`idle | pending | done | error`), `text` and `error`.
    - It ignores a second call while one is pending.
    - Each request gets an id, and results for an outdated recording are dropped.
-   - `RecordScreen` shows a "Transcribir" button after a recording exists, disabled while pending. The text appears under the player.
+   - `RecordScreen` shows a "Transcribir" button after a recording exists. It is disabled while pending and once the status is `done` (empty text included), so each recording is transcribed at most once. It is enabled again after an `error`, for the retry, and when a new recording resets the hook to `idle`. The text appears under the player.
    - Empty text shows "No se ha detectado voz" (03-C4, 03-C7).
 5. **2-minute limit (03-C6).**
    - `useRecorder` keeps an elapsed-time counter and stops by itself at 2:00, keeping the audio.
@@ -61,7 +61,7 @@
 Mapping to criteria:
 - 03-C1, 03-C2: `token.ts`, the `App` gate and `AccessScreen`, with unit tests and a fake client. 03-C1 also needs a phone check, including the installed PWA.
 - 03-C3: pytest on public vs protected routes, a list of tokens, and an empty list.
-- 03-C4, 03-C7: `useTranscription` and `RecordScreen` tests with a fake client; pytest with a failing `FakeTranscriber`.
+- 03-C4, 03-C7: `useTranscription` and `RecordScreen` tests with a fake client, including the button staying disabled after `done` and enabled after `error`; pytest with a failing `FakeTranscriber`.
 - 03-C5: pytest for both content types with `FakeTranscriber`, checking language and model.
 - 03-C6: `useRecorder` test with fake timers; pytest for the 413.
 - 03-C8: pytest with `caplog`, including a request to `/?token=X` through the access-log filter.
@@ -103,4 +103,4 @@ Mapping to criteria:
 - **Header leaks:** the token travels in a header that uvicorn does not log, but any future middleware that logs headers would leak it. A test that asserts the token is not in the logs guards against this.
 - **Cold start plus slow transcription** can exceed 90s in rare cases. In that case the chef sees the timeout message and retries.
 - **Changing the spec 01 tests** to the Spanish strings touches tests that already pass. The change is mechanical, but it is reviewed as part of 03-C11.
-- **Cost:** each transcription spends money. The $5 caps and the 2-minute limit bound it until spec 08 adds per-token daily caps.
+- **Cost:** each transcription spends money. The $5 caps, the 2-minute limit and the one-transcription-per-recording rule bound it until spec 08 adds per-token daily caps.
