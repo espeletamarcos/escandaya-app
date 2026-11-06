@@ -12,7 +12,7 @@ A lightweight PWA frontend and a Python backend that holds all the logic. Pieces
 | Packages | uv (backend), npm (frontend) | Isolated environments and pinned versions with `uv.lock` and `package-lock.json` | In the skeleton |
 | Quality | pytest, ruff, ESLint | Tests and linters locally and in CI | In the skeleton |
 | CI | GitHub Actions | Runs lint, tests and build on every push | In the skeleton |
-| Database | SQLite with SQLAlchemy | One restaurant; can move to Postgres | Spec 04 |
+| Database | SQLite with SQLAlchemy | One restaurant; can move to Postgres | Spec 05 |
 | Speech to text | OpenAI transcription API | Good accuracy with kitchen noise | Spec 03 |
 | Structuring | Claude with structured output (JSON) | Fast and cheap; estimated cost of $1-3/month per restaurant | Spec 04 |
 | Hosting | Fly.io, Railway or Render | Automatic HTTPS, required for the microphone | Spec 02 |

@@ -1,6 +1,6 @@
 # 03 – Transcribe a voice note
 
-Status: in progress
+Status: implemented
 
 ## Why
 The chef already records on the phone (spec 01, deployed in spec 02), but the audio goes nowhere. This spec sends a recording to the backend and shows the Spanish text, so we learn whether transcription is accurate enough in a real kitchen before building the recipe sheet on top of it (spec 04). This is the first spec that spends money on an external API, so it also adds minimal protection: a private link with an access token, and spending caps in the provider consoles.

@@ -16,7 +16,7 @@ Six actions, all from the phone:
 1. **Opens the app** from a private link with a token. No accounts or passwords.
 2. **Dictates a preparation** with an audio button: "I make 2 kilos of tartare for about 40 covers, it has...".
 3. **Sees the recipe sheet** fill in with ingredients and quantities. Missing data is marked on the sheet.
-4. **Corrects by speaking**: "no, it's 300 grams".
+4. **Edits the sheet** by hand if something is wrong, and confirms it.
 5. **Dictates prices**: "tuna, 38 euros a kilo".
 6. **Sees the cost breakdown**: cost per preparation and per cover, with the share that is confirmed versus estimated.
 
@@ -41,7 +41,6 @@ The MVP is split into eight end-to-end specs, ordered by risk. See `specs/README
 ## Out of scope
 
 - Delivery-note scanner and archive for audits (the next step if the MVP works).
-- Manual editing of fields, unless testing shows it is needed.
 - Smart grouped questions about missing data.
 - Sign-up with accounts, multiple restaurants and roles.
 - Reusable base preparations, allergens, purchasing and price alerts.
