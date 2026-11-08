@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
-from backend import transcription
+from backend import structuring, transcription
 from backend.auth import require_token
 from backend.logs import configure_logging
 
@@ -25,6 +25,7 @@ def session() -> None:
 
 
 protected.include_router(transcription.router)
+protected.include_router(structuring.router)
 
 
 def default_static_dir() -> Path | None:

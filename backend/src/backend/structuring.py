@@ -2,9 +2,15 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Annotated, Protocol
 
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict, StringConstraints
+from starlette.concurrency import run_in_threadpool
 
 from backend.settings import Settings, get_settings
+from backend.sheets import Sheet, missing_fields
+
+# A fast 2-minute note is about 2,400 chars: about 2x margin. The trial checks real lengths.
+MAX_TEXT_CHARS = 5_000
 
 
 class StructuringError(Exception):
@@ -65,3 +71,48 @@ def get_structurer(settings: Annotated[Settings, Depends(get_settings)]) -> Stru
     if settings.openai_api_key is None:
         raise HTTPException(status_code=503, detail="Structuring is not configured")
     return _openai_structurer(settings.openai_api_key, settings.structuring_model)
+
+
+class DraftRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    text: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_TEXT_CHARS)
+    ]
+
+
+class DraftOutput(BaseModel):
+    """The shape the model must answer with. `strict_schema()` will build the schema
+    sent to the provider from this same model."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    is_preparation: bool
+    sheet: Sheet | None
+
+
+class DraftResponse(BaseModel):
+    is_preparation: bool
+    sheet: Sheet | None
+    missing: list[str]
+
+
+# Mounted inside the protected router in main.py, so it requires a token.
+router = APIRouter()
+
+
+@router.post("/drafts")
+async def create_draft(
+    body: DraftRequest,
+    structurer: Annotated[Structurer, Depends(get_structurer)],
+) -> DraftResponse:
+    # The structurer blocks on a network call; keep it off the event loop.
+    result = await run_in_threadpool(structurer.structure, body.text)
+    output = DraftOutput.model_validate_json(result.raw)
+
+    if not output.is_preparation:
+        # A sheet sent along with "not a preparation" is ignored.
+        return DraftResponse(is_preparation=False, sheet=None, missing=[])
+    return DraftResponse(
+        is_preparation=True, sheet=output.sheet, missing=missing_fields(output.sheet)
+    )
