@@ -44,3 +44,24 @@ class Sheet(_Model):
     yield_: Yield = Field(alias="yield")
     covers: Covers
     ingredients: list[Ingredient] = Field(max_length=100)
+
+
+def missing_fields(sheet: Sheet) -> list[str]:
+    """Paths of the data the chef still has to fill in, in display order.
+
+    Estimated values are not missing: they have a value, only an uncertain one.
+    The name is never missing, because a valid sheet always has one.
+    """
+    missing: list[str] = []
+    if sheet.yield_.quantity is None:
+        missing.append("yield.quantity")
+    if sheet.yield_.unit is None:
+        missing.append("yield.unit")
+    if sheet.covers.value is None:
+        missing.append("covers")
+    for index, item in enumerate(sheet.ingredients):
+        if item.quantity is None:
+            missing.append(f"ingredients.{index}.quantity")
+        if item.unit is None:
+            missing.append(f"ingredients.{index}.unit")
+    return missing

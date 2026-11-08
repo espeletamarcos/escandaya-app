@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from backend.sheets import Sheet
+from backend.sheets import Sheet, missing_fields
 
 
 def ingredient(**overrides: Any) -> dict[str, Any]:
@@ -137,3 +137,76 @@ def test_missing_ingredient_fields_are_rejected(field: str) -> None:
 
     with pytest.raises(ValidationError):
         parse(sheet_data(ingredients=[item]))
+
+
+NO_YIELD = {"quantity": None, "unit": None, "estimated": False}
+NO_COVERS = {"value": None, "estimated": False}
+
+
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        pytest.param(sheet_data(), [], id="complete sheet"),
+        pytest.param(sheet_data(ingredients=[]), [], id="no ingredients"),
+        pytest.param(
+            sheet_data(**{"yield": NO_YIELD}),
+            ["yield.quantity", "yield.unit"],
+            id="no yield",
+        ),
+        pytest.param(
+            sheet_data(**{"yield": {"quantity": 2, "unit": None, "estimated": False}}),
+            ["yield.unit"],
+            id="yield without unit",
+        ),
+        pytest.param(
+            sheet_data(**{"yield": {"quantity": None, "unit": "kg", "estimated": True}}),
+            ["yield.quantity"],
+            id="yield without quantity",
+        ),
+        pytest.param(sheet_data(covers=NO_COVERS), ["covers"], id="no covers"),
+        pytest.param(
+            sheet_data(covers={"value": 30, "estimated": True}),
+            [],
+            id="estimated covers are not missing",
+        ),
+        pytest.param(
+            sheet_data(ingredients=[ingredient(quantity=None, unit=None)]),
+            ["ingredients.0.quantity", "ingredients.0.unit"],
+            id="ingredient without quantity or unit",
+        ),
+        pytest.param(
+            sheet_data(ingredients=[ingredient(), ingredient(unit=None)]),
+            ["ingredients.1.unit"],
+            id="second ingredient without unit",
+        ),
+        pytest.param(
+            sheet_data(ingredients=[ingredient(quantity=None), ingredient()]),
+            ["ingredients.0.quantity"],
+            id="first ingredient without quantity",
+        ),
+        pytest.param(
+            sheet_data(ingredients=[ingredient(quantity=300, unit="g", estimated=True)]),
+            [],
+            id="estimated quantity is not missing",
+        ),
+        pytest.param(
+            sheet_data(
+                **{
+                    "yield": NO_YIELD,
+                    "covers": NO_COVERS,
+                    "ingredients": [ingredient(unit=None), ingredient(quantity=None)],
+                }
+            ),
+            [
+                "yield.quantity",
+                "yield.unit",
+                "covers",
+                "ingredients.0.unit",
+                "ingredients.1.quantity",
+            ],
+            id="everything missing, in order",
+        ),
+    ],
+)
+def test_missing_fields(data: dict[str, Any], expected: list[str]) -> None:
+    assert missing_fields(parse(data)) == expected
