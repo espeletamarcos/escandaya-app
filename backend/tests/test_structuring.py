@@ -231,3 +231,77 @@ def test_draft_without_openai_key_is_unavailable(make_client: ClientFactory) -> 
 
     assert response.status_code == 503
     assert response.json() == {"detail": "Structuring is not configured"}
+
+
+SECRET_MESSAGE = "Incorrect API key provided: sk-secret-123 (request req_abc)"
+
+
+@pytest.mark.parametrize(
+    ("error", "status", "detail"),
+    [
+        (StructuringError(SECRET_MESSAGE), 502, "Structuring failed"),
+        (StructuringTimeout(SECRET_MESSAGE), 504, "Structuring timed out"),
+    ],
+    ids=["provider-error", "timeout"],
+)
+def test_structurer_failures_return_a_generic_error(
+    make_client: ClientFactory, error: Exception, status: int, detail: str
+) -> None:
+    fake = FakeStructurer(error=error)
+    client = make_client(TOKENS, structurer=fake)
+
+    response = post_text(client, {"text": "Tartar de atún"})
+
+    assert response.status_code == status
+    assert response.json() == {"detail": detail}
+    assert "sk-secret" not in response.text
+    assert "req_abc" not in response.text
+    assert len(fake.calls) == 1
+
+
+def with_first_ingredient(**changes: object) -> dict:
+    ingredients = [{**TUNA_SHEET["ingredients"][0], **changes}, *TUNA_SHEET["ingredients"][1:]]
+    return {**TUNA_SHEET, "ingredients": ingredients}
+
+
+def without(sheet: dict, key: str) -> dict:
+    return {k: v for k, v in sheet.items() if k != key}
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "Atún rojo, 1,5 kg {",
+        '["Atún rojo"]',
+        preparation(with_first_ingredient(unit="cucharada")),
+        preparation(with_first_ingredient(quantity=-1.5)),
+        preparation(without(TUNA_SHEET, "covers")),
+        preparation(with_first_ingredient(estimated=None)),
+        json.dumps({"sheet": TUNA_SHEET}),
+        json.dumps({"is_preparation": True, "sheet": None}),
+        json.dumps({"is_preparation": True}),
+    ],
+    ids=[
+        "invalid-json",
+        "not-an-object",
+        "unknown-unit",
+        "negative-quantity",
+        "missing-sheet-field",
+        "null-required-flag",
+        "missing-is-preparation",
+        "preparation-without-sheet",
+        "preparation-with-no-sheet-key",
+    ],
+)
+def test_invalid_model_output_returns_a_generic_error(
+    make_client: ClientFactory, raw: str
+) -> None:
+    client = make_client(TOKENS, structurer=FakeStructurer(raw=raw))
+
+    response = post_text(client, {"text": "Tartar de atún"})
+
+    assert response.status_code == 502
+    assert response.json() == {"detail": "Structuring failed"}
+    # Neither the model output nor the validation error reaches the client.
+    assert "Atún" not in response.text
+    assert "cucharada" not in response.text

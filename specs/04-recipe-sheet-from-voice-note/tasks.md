@@ -16,7 +16,7 @@
   - 503 without `OPENAI_API_KEY`.
 
   (04-C2, 04-C4, 04-C7)
-- [ ] Write tests, then map failures to responses with a generic `detail` (no key, no provider message, no model output):
+- [x] Write tests, then map failures to responses with a generic `detail` (no key, no provider message, no model output):
   - 502 for a provider error, invalid JSON, an unknown unit, a negative quantity, missing fields, and `is_preparation: true` with a null sheet.
   - 504 for a timeout.
 

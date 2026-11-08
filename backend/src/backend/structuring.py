@@ -3,7 +3,7 @@ from functools import lru_cache
 from typing import Annotated, Protocol
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, StringConstraints, ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from backend.settings import Settings, get_settings
@@ -107,12 +107,25 @@ async def create_draft(
     structurer: Annotated[Structurer, Depends(get_structurer)],
 ) -> DraftResponse:
     # The structurer blocks on a network call; keep it off the event loop.
-    result = await run_in_threadpool(structurer.structure, body.text)
-    output = DraftOutput.model_validate_json(result.raw)
+    # Details are dropped (`from None`): provider messages may echo the key or request ids.
+    try:
+        result = await run_in_threadpool(structurer.structure, body.text)
+    except StructuringTimeout:
+        raise HTTPException(status_code=504, detail="Structuring timed out") from None
+    except StructuringError:
+        raise HTTPException(status_code=502, detail="Structuring failed") from None
+
+    # A validation error quotes the model output, which holds the chef's recipe: drop it.
+    try:
+        output = DraftOutput.model_validate_json(result.raw)
+    except ValidationError:
+        raise HTTPException(status_code=502, detail="Structuring failed") from None
 
     if not output.is_preparation:
         # A sheet sent along with "not a preparation" is ignored.
         return DraftResponse(is_preparation=False, sheet=None, missing=[])
+    if output.sheet is None:
+        raise HTTPException(status_code=502, detail="Structuring failed")
     return DraftResponse(
         is_preparation=True, sheet=output.sheet, missing=missing_fields(output.sheet)
     )
