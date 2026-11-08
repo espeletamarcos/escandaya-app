@@ -5,7 +5,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.main import create_app
-from backend.settings import DEFAULT_TRANSCRIPTION_MODEL, Settings, get_settings
+from backend.settings import (
+    DEFAULT_STRUCTURING_MODEL,
+    DEFAULT_TRANSCRIPTION_MODEL,
+    Settings,
+    get_settings,
+)
 from backend.transcription import get_transcriber
 
 ClientFactory = Callable[..., TestClient]
@@ -19,6 +24,7 @@ def make_settings(
         access_tokens=tokens,
         openai_api_key=openai_api_key,
         transcription_model=DEFAULT_TRANSCRIPTION_MODEL,
+        structuring_model=DEFAULT_STRUCTURING_MODEL,
     )
 
 
