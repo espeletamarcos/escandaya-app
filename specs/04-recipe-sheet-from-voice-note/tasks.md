@@ -8,7 +8,7 @@
 
   (04-C3)
 - [x] Write a table test, then add `missing_fields(sheet)`, returning `yield.quantity`, `yield.unit`, `covers`, `ingredients.<i>.quantity` and `ingredients.<i>.unit` (04-C4)
-- [ ] Define the `Structurer` protocol, `StructuringResult` (`raw`, `input_tokens`, `output_tokens`), `StructuringError` and `StructuringTimeout` in `structuring.py`. Add a `FakeStructurer` to `conftest.py` that returns a fixed raw string or raises and records its calls, and wire the structurer into the app as an overridable dependency (04-C2)
+- [x] Define the `Structurer` protocol, `StructuringResult` (`raw`, `input_tokens`, `output_tokens`), `StructuringError` and `StructuringTimeout` in `structuring.py`. Add a `FakeStructurer` to `conftest.py` that returns a fixed raw string or raises and records its calls, and wire the structurer into the app as an overridable dependency (04-C2)
 - [ ] Write tests, then add `POST /api/drafts` on the protected router:
   - Body `{"text": ...}`, trimmed, 1–5,000 chars, otherwise 422.
   - Run the structurer in the thread pool with the text, validate `raw` against the output wrapper and return `{is_preparation, sheet, missing}`.

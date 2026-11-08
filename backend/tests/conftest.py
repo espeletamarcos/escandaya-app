@@ -11,6 +11,7 @@ from backend.settings import (
     Settings,
     get_settings,
 )
+from backend.structuring import StructuringResult, get_structurer
 from backend.transcription import get_transcriber
 
 ClientFactory = Callable[..., TestClient]
@@ -43,19 +44,50 @@ class FakeTranscriber:
         return self.text
 
 
+class FakeStructurer:
+    """Returns a fixed raw answer with fixed token counts, or raises `error`, and
+    records every text it is given. `raw` is not validated, so it can be bad JSON."""
+
+    def __init__(
+        self,
+        raw: str = "",
+        error: Exception | None = None,
+        input_tokens: int | None = 120,
+        output_tokens: int | None = 80,
+    ) -> None:
+        self.raw = raw
+        self.error = error
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
+        self.calls: list[str] = []
+
+    def structure(self, text: str) -> StructuringResult:
+        self.calls.append(text)
+        if self.error is not None:
+            raise self.error
+        return StructuringResult(
+            raw=self.raw,
+            input_tokens=self.input_tokens,
+            output_tokens=self.output_tokens,
+        )
+
+
 @pytest.fixture
 def make_client() -> ClientFactory:
-    """Build a test client with the given tokens and, optionally, a fake transcriber."""
+    """Build a test client with the given tokens and, optionally, fake providers."""
 
     def factory(
         tokens: tuple[str, ...] = (),
         static_dir: Path | None = None,
         transcriber: FakeTranscriber | None = None,
+        structurer: FakeStructurer | None = None,
     ) -> TestClient:
         app = create_app(static_dir=static_dir)
         app.dependency_overrides[get_settings] = lambda: make_settings(tokens)
         if transcriber is not None:
             app.dependency_overrides[get_transcriber] = lambda: transcriber
+        if structurer is not None:
+            app.dependency_overrides[get_structurer] = lambda: structurer
         return TestClient(app)
 
     return factory
