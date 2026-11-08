@@ -2,7 +2,7 @@
 
 ## Backend
 - [x] Write tests, then add `STRUCTURING_MODEL` to `settings.py` (default `gpt-5-mini`) and to `conftest.make_settings` (04-C2)
-- [ ] Write tests, then add `sheets.py` with the `Unit`, `Ingredient`, `Yield`, `Covers` and `Sheet` models:
+- [x] Write tests, then add `sheets.py` with the `Unit`, `Ingredient`, `Yield`, `Covers` and `Sheet` models:
   - Names trimmed, 1–120 chars; quantities `> 0` and `<= 100000`; covers 1–10000; 0–100 ingredients.
   - `yield_` with the JSON alias `yield`, and `extra="forbid"` on every model.
 
