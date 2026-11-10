@@ -21,7 +21,7 @@
   - 504 for a timeout.
 
   (04-C3, 04-C7)
-- [ ] Write tests with `caplog`, then add the log line `structuring status=%d chars=%s duration_ms=%s input_tokens=%s output_tokens=%s`. An invalid output logs `status=502` with its tokens. Assert that the text, the raw output and the ingredient names never appear in the logs, including on validation errors (04-C8)
+- [x] Write tests with `caplog`, then add the log line `structuring status=%d chars=%s duration_ms=%s input_tokens=%s output_tokens=%s`. An invalid output logs `status=502` with its tokens. Assert that the text, the raw output and the ingredient names never appear in the logs, including on validation errors (04-C8)
 - [ ] Write a unit test, then add `strict_schema()`: generate the schema of `{"is_preparation": bool, "sheet": Sheet | null}`, set `additionalProperties: false`, mark every property required, and keep only the keywords strict mode accepts (04-C3)
 - [ ] Implement `OpenAIStructurer`:
   - Responses API with a strict `json_schema` text format from `strict_schema()`, and the system prompt as a module constant (units, conversions, `estimated` for approximate words and ranges, unknown units left empty, nothing invented, `is_preparation: false` for small talk).

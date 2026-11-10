@@ -1,3 +1,5 @@
+import logging
+import time
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Annotated, Protocol
@@ -8,6 +10,8 @@ from starlette.concurrency import run_in_threadpool
 
 from backend.settings import Settings, get_settings
 from backend.sheets import Sheet, missing_fields
+
+logger = logging.getLogger(__name__)
 
 # A fast 2-minute note is about 2,400 chars: about 2x margin. The trial checks real lengths.
 MAX_TEXT_CHARS = 5_000
@@ -97,27 +101,27 @@ class DraftResponse(BaseModel):
     missing: list[str]
 
 
-# Mounted inside the protected router in main.py, so it requires a token.
-router = APIRouter()
+def log_structuring(
+    status: int, chars: int, duration_ms: int, result: StructuringResult | None
+) -> None:
+    """The only log line for a structuring call: never the text, the output or the sheet."""
+    input_tokens = None if result is None else result.input_tokens
+    output_tokens = None if result is None else result.output_tokens
+    logger.info(
+        "structuring status=%d chars=%s duration_ms=%s input_tokens=%s output_tokens=%s",
+        status,
+        chars,
+        duration_ms,
+        "-" if input_tokens is None else input_tokens,
+        "-" if output_tokens is None else output_tokens,
+    )
 
 
-@router.post("/drafts")
-async def create_draft(
-    body: DraftRequest,
-    structurer: Annotated[Structurer, Depends(get_structurer)],
-) -> DraftResponse:
-    # The structurer blocks on a network call; keep it off the event loop.
-    # Details are dropped (`from None`): provider messages may echo the key or request ids.
-    try:
-        result = await run_in_threadpool(structurer.structure, body.text)
-    except StructuringTimeout:
-        raise HTTPException(status_code=504, detail="Structuring timed out") from None
-    except StructuringError:
-        raise HTTPException(status_code=502, detail="Structuring failed") from None
-
+def draft_from_output(raw: str) -> DraftResponse:
+    """Validate the model's answer and build the response, or raise a generic 502."""
     # A validation error quotes the model output, which holds the chef's recipe: drop it.
     try:
-        output = DraftOutput.model_validate_json(result.raw)
+        output = DraftOutput.model_validate_json(raw)
     except ValidationError:
         raise HTTPException(status_code=502, detail="Structuring failed") from None
 
@@ -129,3 +133,38 @@ async def create_draft(
     return DraftResponse(
         is_preparation=True, sheet=output.sheet, missing=missing_fields(output.sheet)
     )
+
+
+# Mounted inside the protected router in main.py, so it requires a token.
+router = APIRouter()
+
+
+@router.post("/drafts")
+async def create_draft(
+    body: DraftRequest,
+    structurer: Annotated[Structurer, Depends(get_structurer)],
+) -> DraftResponse:
+    # The structurer blocks on a network call; keep it off the event loop.
+    # Details are dropped (`from None`): provider messages may echo the key or request ids.
+    started = time.perf_counter()
+    # Anything not handled below reaches the client as a 500.
+    status = 500
+    result: StructuringResult | None = None
+    try:
+        result = await run_in_threadpool(structurer.structure, body.text)
+        response = draft_from_output(result.raw)
+        status = 200
+        return response
+    except StructuringTimeout:
+        status = 504
+        raise HTTPException(status_code=504, detail="Structuring timed out") from None
+    except StructuringError:
+        status = 502
+        raise HTTPException(status_code=502, detail="Structuring failed") from None
+    except HTTPException as error:
+        # An invalid output: its tokens were still paid for, so they are logged.
+        status = error.status_code
+        raise
+    finally:
+        duration_ms = round((time.perf_counter() - started) * 1000)
+        log_structuring(status, len(body.text), duration_ms, result)
