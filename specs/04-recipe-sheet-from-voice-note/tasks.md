@@ -33,7 +33,7 @@
 
 ## Frontend
 - [x] Add `sheet/types.ts` (`Unit`, `Ingredient`, `Sheet`, `Draft`). Write tests, then add `createDraft(text)` to `client.ts`: token header, 60s timeout, a check of the response shape (top-level fields, ingredient fields, units in the list) and `ApiError("failed")` for anything else, 422 included (04-C1, 04-C3, 04-C7)
-- [ ] Write tests, then add `useVoiceSheet`, replacing `useTranscription` and moving its tests:
+- [x] Write tests, then add `useVoiceSheet`, replacing `useTranscription` and moving its tests:
   - Steps `idle | transcribing | structuring | done | no-voice | not-preparation | error`, with both client functions injected.
   - Transcribe only when there is no transcript yet. Empty text stops at `no-voice` without calling `createDraft`.
   - A retry after a structuring error calls only `createDraft` with the stored transcript.
@@ -55,6 +55,7 @@
   - On `done`, render `SheetForm` keyed by the request id. Never render the transcript.
   - "No parece una preparación" and "No se ha detectado voz".
   - The first render marks exactly the fields in the fake response's `missing`.
+  - Remove `useTranscription` and its tests, now covered by `useVoiceSheet`.
 
   (04-C1, 04-C5, 04-C7, edge cases)
 
