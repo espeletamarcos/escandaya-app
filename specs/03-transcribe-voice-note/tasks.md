@@ -74,4 +74,5 @@
   - 2026-11-05: no Android device available. The app works on desktop Chrome, which uses the same engine and recording format. The chef uses an iPhone.
 - [x] Check `fly logs` after opening the private link and transcribing: no token and no transcript text in the logs (03-C8)
   - 2026-11-05: the visit from the private link is logged as `GET /` with no query string. The transcription is logged only as `transcription status=200 bytes=306456 type=audio/webm duration_ms=1749`. No token and no transcript text appear in the logs.
-- [ ] Update the status of spec 03 in `specs/README.md` as it moves to `in progress` and `implemented`
+- [x] Update the status of spec 03 in `specs/README.md` as it moves to `in progress` and `implemented`
+  - 2026-11-06: marked `implemented`. The airplane-mode retry check on the iPhone and the Android checks are waived: the error and retry path is covered by tests, the app was checked on the iPhone and on desktop Chrome, and the chef uses an iPhone.

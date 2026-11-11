@@ -1,4 +1,5 @@
 import { clearToken, getToken } from "../auth/token";
+import { type Draft, type Ingredient, type Sheet, type Unit, UNITS } from "../sheet/types";
 
 const API_BASE = "/api";
 
@@ -6,6 +7,8 @@ const API_BASE = "/api";
 // This covers a backend or connection that hangs.
 export const TRANSCRIBE_TIMEOUT_MS = 90_000;
 export const SESSION_TIMEOUT_MS = 10_000;
+// The backend gives up on OpenAI at 45s; the machine is already warm after transcribing.
+export const DRAFT_TIMEOUT_MS = 60_000;
 
 /** What went wrong, so the UI can show a readable message for each case. */
 export type ApiErrorKind =
@@ -151,6 +154,84 @@ export async function transcribe(audio: Blob): Promise<string> {
         throw new Error("Unexpected transcription response");
       }
       return body.text;
+    },
+  );
+}
+
+// --- Draft response check -----------------------------------------------------
+// The screens rely on this shape, so anything else is a failed request, not a crash.
+// Limits (quantities > 0, name lengths…) are the backend's job and are not rechecked.
+
+type Json = Record<string, unknown>;
+
+function isObject(value: unknown): value is Json {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNumberOrNull(value: unknown): value is number | null {
+  return value === null || typeof value === "number";
+}
+
+function isUnitOrNull(value: unknown): value is Unit | null {
+  return value === null || (UNITS as readonly unknown[]).includes(value);
+}
+
+function isAmount(value: unknown): boolean {
+  return (
+    isObject(value) &&
+    isNumberOrNull(value.quantity) &&
+    isUnitOrNull(value.unit) &&
+    typeof value.estimated === "boolean"
+  );
+}
+
+function isIngredient(value: unknown): value is Ingredient {
+  return isObject(value) && typeof value.name === "string" && isAmount(value);
+}
+
+function isSheet(value: unknown): value is Sheet {
+  return (
+    isObject(value) &&
+    typeof value.name === "string" &&
+    isAmount(value.yield) &&
+    isObject(value.covers) &&
+    isNumberOrNull(value.covers.value) &&
+    typeof value.covers.estimated === "boolean" &&
+    Array.isArray(value.ingredients) &&
+    value.ingredients.every(isIngredient)
+  );
+}
+
+function isDraft(value: unknown): value is Draft {
+  if (
+    !isObject(value) ||
+    !Array.isArray(value.missing) ||
+    !value.missing.every((path) => typeof path === "string")
+  ) {
+    return false;
+  }
+  if (value.is_preparation === true) {
+    return isSheet(value.sheet);
+  }
+  return value.is_preparation === false && value.sheet === null;
+}
+
+/** Send the transcript and return the sheet the backend made of it, with its missing data. */
+export async function createDraft(text: string): Promise<Draft> {
+  return protectedRequest(
+    "/drafts",
+    {
+      method: "POST",
+      body: JSON.stringify({ text }),
+      headers: { "Content-Type": "application/json" },
+    },
+    DRAFT_TIMEOUT_MS,
+    async (response) => {
+      const body: unknown = await response.json();
+      if (!isDraft(body)) {
+        throw new Error("Unexpected draft response");
+      }
+      return body;
     },
   );
 }

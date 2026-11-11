@@ -1,0 +1,31 @@
+/* Layout only: the look of the app comes in its own styling spec. */
+.sheet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.sheet-form fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sheet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+label.sheet-field {
+  flex-direction: row;
+  align-items: center;
+}
+
+.sheet-form input[type="text"] {
+  min-width: 0;
+}

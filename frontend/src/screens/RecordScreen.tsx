@@ -1,26 +1,34 @@
-import { transcribe as transcribeAudio } from "../api/client";
+import { createDraft as createDraftRequest, transcribe as transcribeAudio } from "../api/client";
 import type { Recorder } from "../recorder/Recorder";
 import { formatDuration, MAX_RECORDING_MS, useRecorder } from "../recorder/useRecorder";
-import { useTranscription, type TranscribeFn } from "../transcription/useTranscription";
+import SheetForm from "../sheet/SheetForm";
+import { type CreateDraftFn, type TranscribeFn, useVoiceSheet } from "../sheet/useVoiceSheet";
 import "./RecordScreen.css";
 
 interface RecordScreenProps {
   recorder: Recorder;
-  /** Sends the audio for transcription; tests pass a fake. */
+  /** Send the audio for transcription and the text for a sheet; tests pass fakes. */
   transcribe?: TranscribeFn;
+  createDraft?: CreateDraftFn;
 }
 
-function RecordScreen({ recorder, transcribe = transcribeAudio }: RecordScreenProps) {
+function RecordScreen({
+  recorder,
+  transcribe = transcribeAudio,
+  createDraft = createDraftRequest,
+}: RecordScreenProps) {
   const { status, audio, audioUrl, error, notice, elapsed, toggle } = useRecorder(recorder);
-  const transcription = useTranscription(transcribe);
+  const voice = useVoiceSheet(transcribe, createDraft);
   const recording = status === "recording";
-  const pending = transcription.status === "pending";
-  // Each recording is transcribed at most once; after an error it can be retried.
-  const transcribed = transcription.status === "done";
+  const pending = voice.step === "transcribing" || voice.step === "structuring";
+  // Each recording gets one sheet; another try would not change the outcome.
+  // After an error the button is enabled again, to retry the step that failed.
+  const finished =
+    voice.step === "done" || voice.step === "no-voice" || voice.step === "not-preparation";
 
   const onRecordClick = () => {
-    // A new recording replaces the old one, so its transcript no longer applies.
-    if (!recording) transcription.reset();
+    // A new recording replaces the old one, with its transcript and its sheet.
+    if (!recording) voice.reset();
     void toggle();
   };
 
@@ -50,23 +58,28 @@ function RecordScreen({ recorder, transcribe = transcribeAudio }: RecordScreenPr
         </p>
       )}
       {audio && !recording && (
-        <section className="transcription" aria-live="polite">
+        <section className="voice-sheet" aria-live="polite">
           <button
             type="button"
-            className="transcribe-button"
-            disabled={pending || transcribed}
-            onClick={() => void transcription.transcribe(audio)}
+            className="voice-sheet-button"
+            disabled={pending || finished}
+            onClick={() => void voice.run(audio)}
           >
-            Transcribir
+            Transcribir y crear ficha
           </button>
-          {pending && <p>Transcribiendo…</p>}
-          {transcription.error && <p role="alert">{transcription.error}</p>}
-          {transcription.status === "done" &&
-            (transcription.text?.trim() ? (
-              <p className="transcript">{transcription.text}</p>
-            ) : (
-              <p className="transcript-empty">No se ha detectado voz</p>
-            ))}
+          {voice.step === "transcribing" && <p>Transcribiendo…</p>}
+          {voice.step === "structuring" && <p>Creando ficha…</p>}
+          {voice.error && <p role="alert">{voice.error}</p>}
+          {voice.step === "no-voice" && (
+            <p className="voice-sheet-notice">No se ha detectado voz</p>
+          )}
+          {voice.step === "not-preparation" && (
+            <p className="voice-sheet-notice">No parece una preparación</p>
+          )}
+          {/* The transcript is never shown: the chef sees the sheet (04-C5). */}
+          {voice.step === "done" && voice.sheet && (
+            <SheetForm key={voice.draftId} sheet={voice.sheet} />
+          )}
         </section>
       )}
     </main>

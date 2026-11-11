@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearToken, getToken, setToken } from "../auth/token";
+import type { Draft, Sheet } from "../sheet/types";
 import {
   ApiError,
   type ApiErrorKind,
   checkSession,
+  createDraft,
+  DRAFT_TIMEOUT_MS,
   onUnauthorized,
   SESSION_TIMEOUT_MS,
   transcribe,
@@ -256,5 +259,158 @@ describe("on 401 (03-C2, revoked token)", () => {
     expect(getToken()).toBe("chef-token");
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
+  });
+});
+
+const TUNA_SHEET: Sheet = {
+  name: "Tartar de atún",
+  yield: { quantity: 2, unit: "kg", estimated: true },
+  covers: { value: 30, estimated: true },
+  ingredients: [
+    { name: "atún rojo", quantity: 1.5, unit: "kg", estimated: false },
+    { name: "un puñado de cebollino", quantity: null, unit: null, estimated: false },
+  ],
+};
+
+const TUNA_DRAFT: Draft = {
+  is_preparation: true,
+  sheet: TUNA_SHEET,
+  missing: ["ingredients.1.quantity", "ingredients.1.unit"],
+};
+
+/** A copy of `value` without `key`. */
+function without(value: object, key: string): Record<string, unknown> {
+  const copy: Record<string, unknown> = { ...value };
+  delete copy[key];
+  return copy;
+}
+
+/** The tuna sheet with `changes` applied to its first ingredient. */
+function withFirstIngredient(changes: Record<string, unknown>) {
+  const [first, ...rest] = TUNA_SHEET.ingredients;
+  return { ...TUNA_DRAFT, sheet: { ...TUNA_SHEET, ingredients: [{ ...first, ...changes }, ...rest] } };
+}
+
+describe("createDraft (04-C1, 04-C3, 04-C7)", () => {
+  it("posts the text as JSON with the token", async () => {
+    respond(200, TUNA_DRAFT);
+
+    await createDraft("dos kilos de atún");
+
+    const { url, init } = lastRequest();
+    expect(url).toBe("/api/drafts");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual({ text: "dos kilos de atún" });
+    const headers = headersOf(init);
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(headers.get("Authorization")).toBe("Bearer chef-token");
+  });
+
+  it("returns the sheet and its missing data", async () => {
+    respond(200, TUNA_DRAFT);
+    await expect(createDraft("texto")).resolves.toEqual(TUNA_DRAFT);
+  });
+
+  it("returns a draft that is not a preparation", async () => {
+    respond(200, { is_preparation: false, sheet: null, missing: [] });
+    await expect(createDraft("hola")).resolves.toEqual({
+      is_preparation: false,
+      sheet: null,
+      missing: [],
+    });
+  });
+
+  it("accepts a sheet with no ingredients and nothing filled in", async () => {
+    const empty = {
+      is_preparation: true,
+      sheet: {
+        name: "Fondo",
+        yield: { quantity: null, unit: null, estimated: false },
+        covers: { value: null, estimated: false },
+        ingredients: [],
+      },
+      missing: ["yield.quantity", "yield.unit", "covers"],
+    };
+    respond(200, empty);
+
+    await expect(createDraft("texto")).resolves.toEqual(empty);
+  });
+
+  it.each<[number, ApiErrorKind]>([
+    [401, "unauthorized"],
+    [422, "failed"],
+    [502, "failed"],
+    [503, "failed"],
+    [500, "failed"],
+    [504, "timeout"],
+  ])("maps status %i to %s", async (status, kind) => {
+    respond(status, { detail: "whatever" });
+    expect(await errorKind(createDraft("texto"))).toBe(kind);
+  });
+
+  it.each<[string, unknown]>([
+    ["a list", [TUNA_DRAFT]],
+    ["no is_preparation", { sheet: TUNA_SHEET, missing: [] }],
+    ["is_preparation as a string", { ...TUNA_DRAFT, is_preparation: "true" }],
+    ["no sheet", without(TUNA_DRAFT, "sheet")],
+    ["a preparation with a null sheet", { ...TUNA_DRAFT, sheet: null }],
+    ["not a preparation with a sheet", { ...TUNA_DRAFT, is_preparation: false }],
+    ["no missing", { is_preparation: false, sheet: null }],
+    ["missing with a number", { ...TUNA_DRAFT, missing: [1] }],
+    ["a sheet without a name", { ...TUNA_DRAFT, sheet: { ...TUNA_SHEET, name: null } }],
+    [
+      "a yield with an unknown unit",
+      { ...TUNA_DRAFT, sheet: { ...TUNA_SHEET, yield: { ...TUNA_SHEET.yield, unit: "taza" } } },
+    ],
+    [
+      "covers as a string",
+      { ...TUNA_DRAFT, sheet: { ...TUNA_SHEET, covers: { value: "30", estimated: false } } },
+    ],
+    [
+      "ingredients that are not a list",
+      { ...TUNA_DRAFT, sheet: { ...TUNA_SHEET, ingredients: {} } },
+    ],
+    [
+      "an ingredient without estimated",
+      { ...TUNA_DRAFT, sheet: { ...TUNA_SHEET, ingredients: [without(TUNA_SHEET.ingredients[0], "estimated")] } },
+    ],
+    ["an ingredient with an unknown unit", withFirstIngredient({ unit: "taza" })],
+    ["an ingredient quantity as a string", withFirstIngredient({ quantity: "1,5" })],
+    ["an ingredient name as a number", withFirstIngredient({ name: 7 })],
+    ["an ingredient that is null", { ...TUNA_DRAFT, sheet: { ...TUNA_SHEET, ingredients: [null] } }],
+  ])("fails with failed on %s", async (_, body) => {
+    respond(200, body);
+    expect(await errorKind(createDraft("texto"))).toBe("failed");
+  });
+
+  it("fails with failed on a body that is not JSON", async () => {
+    fetchMock.mockResolvedValue(new Response("<html>oops</html>", { status: 200 }));
+    expect(await errorKind(createDraft("texto"))).toBe("failed");
+  });
+
+  it("fails with network when fetch rejects", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    expect(await errorKind(createDraft("texto"))).toBe("network");
+  });
+
+  it("fails with unauthorized without a stored token, without calling the backend", async () => {
+    clearToken();
+
+    expect(await errorKind(createDraft("texto"))).toBe("unauthorized");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("aborts after 60s and fails with timeout", async () => {
+    vi.useFakeTimers();
+    hang();
+
+    const result = errorKind(createDraft("texto"));
+    await vi.advanceTimersByTimeAsync(DRAFT_TIMEOUT_MS - 1);
+    expect(lastRequest().init.signal?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(DRAFT_TIMEOUT_MS).toBe(60_000);
+    expect(lastRequest().init.signal?.aborted).toBe(true);
+    expect(await result).toBe("timeout");
   });
 });

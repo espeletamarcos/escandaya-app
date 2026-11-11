@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 DEFAULT_TRANSCRIPTION_MODEL = "gpt-4o-mini-transcribe"
+# Until the structuring trial (04-C8) picks a model.
+DEFAULT_STRUCTURING_MODEL = "gpt-5-mini"
 
 
 @dataclass(frozen=True)
@@ -11,6 +13,7 @@ class Settings:
     access_tokens: tuple[str, ...]
     openai_api_key: str | None
     transcription_model: str
+    structuring_model: str
 
 
 def _clean(value: str | None) -> str | None:
@@ -30,6 +33,7 @@ def load_settings(env: Mapping[str, str] = os.environ) -> Settings:
         access_tokens=tokens,
         openai_api_key=_clean(env.get("OPENAI_API_KEY")),
         transcription_model=_clean(env.get("TRANSCRIPTION_MODEL")) or DEFAULT_TRANSCRIPTION_MODEL,
+        structuring_model=_clean(env.get("STRUCTURING_MODEL")) or DEFAULT_STRUCTURING_MODEL,
     )
 
 

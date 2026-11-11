@@ -1,4 +1,8 @@
-from backend.settings import DEFAULT_TRANSCRIPTION_MODEL, load_settings
+from backend.settings import (
+    DEFAULT_STRUCTURING_MODEL,
+    DEFAULT_TRANSCRIPTION_MODEL,
+    load_settings,
+)
 
 
 def test_empty_environment_uses_safe_defaults() -> None:
@@ -7,6 +11,7 @@ def test_empty_environment_uses_safe_defaults() -> None:
     assert settings.access_tokens == ()
     assert settings.openai_api_key is None
     assert settings.transcription_model == DEFAULT_TRANSCRIPTION_MODEL == "gpt-4o-mini-transcribe"
+    assert settings.structuring_model == DEFAULT_STRUCTURING_MODEL == "gpt-5-mini"
 
 
 def test_access_tokens_are_split_and_trimmed() -> None:
@@ -49,3 +54,15 @@ def test_blank_transcription_model_uses_default() -> None:
     settings = load_settings({"TRANSCRIPTION_MODEL": " "})
 
     assert settings.transcription_model == DEFAULT_TRANSCRIPTION_MODEL
+
+
+def test_structuring_model_can_be_overridden() -> None:
+    settings = load_settings({"STRUCTURING_MODEL": " gpt-5-nano "})
+
+    assert settings.structuring_model == "gpt-5-nano"
+
+
+def test_blank_structuring_model_uses_default() -> None:
+    settings = load_settings({"STRUCTURING_MODEL": " "})
+
+    assert settings.structuring_model == DEFAULT_STRUCTURING_MODEL

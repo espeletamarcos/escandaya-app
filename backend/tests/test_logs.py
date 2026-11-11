@@ -1,9 +1,11 @@
+import json
 import logging
 
 import pytest
-from conftest import ClientFactory, FakeTranscriber
+from conftest import ClientFactory, FakeStructurer, FakeTranscriber
 
 import backend.main  # noqa: F401  (installs the access-log filter, as uvicorn's import does)
+from backend.structuring import StructuringError, StructuringTimeout
 from backend.transcription import (
     MAX_AUDIO_BYTES,
     TranscriptionError,
@@ -128,3 +130,187 @@ def test_unsupported_type_is_logged_without_the_sent_type(
     [record] = transcription_logs(caplog)
     assert "status=415" in record.getMessage()
     assert TOKEN not in caplog.text
+
+
+# --- Structuring (04-C8) ------------------------------------------------------
+
+DICTATION = "Tartar de atún rojo, kilo y medio de atún y un poco de cebollino"
+INGREDIENTS = ("Atún rojo", "Cebollino")
+SHEET = {
+    "name": "Tartar de atún",
+    "yield": {"quantity": 2, "unit": "kg", "estimated": True},
+    "covers": {"value": None, "estimated": False},
+    "ingredients": [
+        {"name": "Atún rojo", "quantity": 1.5, "unit": "kg", "estimated": False},
+        {"name": "Cebollino", "quantity": None, "unit": None, "estimated": False},
+    ],
+}
+
+
+def structuring_logs(caplog: pytest.LogCaptureFixture) -> list[logging.LogRecord]:
+    return [r for r in caplog.records if r.name == "backend.structuring"]
+
+
+def post_draft(client, text: str = DICTATION):
+    return client.post("/api/drafts", json={"text": text}, headers=AUTH)
+
+
+def assert_no_content_logged(caplog: pytest.LogCaptureFixture) -> None:
+    """Neither the dictation, the sheet nor the token reaches the logs."""
+    assert DICTATION not in caplog.text
+    assert "Tartar" not in caplog.text
+    for name in INGREDIENTS:
+        assert name not in caplog.text
+    assert TOKEN not in caplog.text
+
+
+def test_successful_structuring_logs_status_length_duration_and_tokens(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    raw = json.dumps({"is_preparation": True, "sheet": SHEET})
+    fake = FakeStructurer(raw=raw, input_tokens=321, output_tokens=123)
+    client = make_client((TOKEN,), structurer=fake)
+
+    with caplog.at_level(logging.INFO):
+        response = post_draft(client, f"  {DICTATION}  ")
+
+    assert response.status_code == 200
+    [record] = structuring_logs(caplog)
+    message = record.getMessage()
+    assert message.startswith("structuring status=200 ")
+    # The length of the trimmed text, which is what the model receives.
+    assert f"chars={len(DICTATION)}" in message
+    assert "duration_ms=" in message
+    assert "input_tokens=321" in message
+    assert "output_tokens=123" in message
+    assert_no_content_logged(caplog)
+    assert raw not in caplog.text
+
+
+def test_not_a_preparation_is_logged_as_a_success(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    fake = FakeStructurer(raw='{"is_preparation": false, "sheet": null}')
+    client = make_client((TOKEN,), structurer=fake)
+
+    with caplog.at_level(logging.INFO):
+        response = post_draft(client, "hola, ¿qué tal el servicio?")
+
+    assert response.status_code == 200
+    [record] = structuring_logs(caplog)
+    assert "status=200" in record.getMessage()
+    assert "qué tal" not in caplog.text
+
+
+def with_unit(unit: str) -> dict:
+    return {**SHEET, "ingredients": [{**SHEET["ingredients"][0], "unit": unit}]}
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "Atún rojo 1,5 kg; Cebollino {",
+        json.dumps({"is_preparation": True, "sheet": with_unit("cucharada")}),
+        json.dumps({"is_preparation": True, "sheet": {**SHEET, "covers": "Cebollino"}}),
+        json.dumps({"is_preparation": True, "sheet": None, "note": "Atún rojo"}),
+        json.dumps({"is_preparation": True, "sheet": None}),
+    ],
+    ids=[
+        "invalid-json",
+        "unknown-unit",
+        "wrong-type",
+        "extra-field",
+        "preparation-without-sheet",
+    ],
+)
+def test_invalid_output_logs_502_with_its_tokens_and_no_content(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture, raw: str
+) -> None:
+    fake = FakeStructurer(raw=raw, input_tokens=400, output_tokens=90)
+    client = make_client((TOKEN,), structurer=fake)
+
+    with caplog.at_level(logging.INFO):
+        response = post_draft(client)
+
+    assert response.status_code == 502
+    [record] = structuring_logs(caplog)
+    message = record.getMessage()
+    assert "status=502" in message
+    # The answer was paid for even though it was unusable.
+    assert "input_tokens=400" in message
+    assert "output_tokens=90" in message
+    # The validation error, which quotes the output, is dropped.
+    assert record.exc_info is None
+    assert_no_content_logged(caplog)
+    assert raw not in caplog.text
+    assert "cucharada" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("error", "status"),
+    [
+        (StructuringError(f"provider echoed {TOKEN}: {DICTATION}"), 502),
+        (StructuringTimeout(f"timed out: {DICTATION}"), 504),
+    ],
+    ids=["provider-error", "timeout"],
+)
+def test_failed_structuring_logs_the_status_without_tokens(
+    make_client: ClientFactory,
+    caplog: pytest.LogCaptureFixture,
+    error: Exception,
+    status: int,
+) -> None:
+    client = make_client((TOKEN,), structurer=FakeStructurer(error=error))
+
+    with caplog.at_level(logging.INFO):
+        response = post_draft(client)
+
+    assert response.status_code == status
+    [record] = structuring_logs(caplog)
+    message = record.getMessage()
+    assert f"status={status}" in message
+    # No answer came back, so there are no token counts.
+    assert "input_tokens=- output_tokens=-" in message
+    assert record.exc_info is None
+    assert_no_content_logged(caplog)
+
+
+def test_token_counts_the_provider_omits_are_logged_as_a_dash(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    fake = FakeStructurer(
+        raw='{"is_preparation": false, "sheet": null}', input_tokens=None, output_tokens=None
+    )
+    client = make_client((TOKEN,), structurer=fake)
+
+    with caplog.at_level(logging.INFO):
+        post_draft(client)
+
+    [record] = structuring_logs(caplog)
+    assert "input_tokens=- output_tokens=-" in record.getMessage()
+
+
+def test_an_unexpected_error_is_logged_as_500(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    client = make_client((TOKEN,), structurer=FakeStructurer(error=RuntimeError("bug")))
+
+    with caplog.at_level(logging.INFO), pytest.raises(RuntimeError):
+        post_draft(client)
+
+    [record] = structuring_logs(caplog)
+    assert "status=500" in record.getMessage()
+
+
+def test_rejected_text_is_not_logged(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    fake = FakeStructurer(raw='{"is_preparation": false, "sheet": null}')
+    client = make_client((TOKEN,), structurer=fake)
+
+    with caplog.at_level(logging.INFO):
+        response = post_draft(client, "   ")
+
+    # Structuring never ran, so there is no structuring line.
+    assert response.status_code == 422
+    assert structuring_logs(caplog) == []
