@@ -62,7 +62,7 @@
 ## Operations
 - [x] Extend `scripts/smoke.sh` to check that `POST /api/drafts` without a token returns 401 (04-C2)
 - [x] Write `scripts/structure_trial.py`: run every `.txt` transcript in a given folder through `OpenAIStructurer` for each candidate model (`gpt-5-nano`, `gpt-5-mini`, `gpt-4.1-mini` by default), validate with the endpoint's code, and print the sheet and its missing data or the validation failure, the time, the tokens and the text length (04-C8)
-- [ ] Update `README.MD`:
+- [x] Update `README.MD`:
   - `STRUCTURING_MODEL` in the secrets table.
   - The one OpenAI key and its $5/month cap cover transcription and structuring.
   - Remove the Anthropic key and cap.
