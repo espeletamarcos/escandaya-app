@@ -41,7 +41,7 @@
   - Spanish error messages per error kind and step.
 
   (04-C1, 04-C7, edge cases)
-- [ ] Write tests, then add `sheetEditor.ts`: `toEditable` (numbers as strings, a client id per ingredient), the edit reducer (name, yield, covers, each ingredient's fields, add, delete), `parseQuantity` (comma or dot, `> 0`, else null) and `emptyFields` (04-C5, 04-C6)
+- [x] Write tests, then add `sheetEditor.ts`: `toEditable` (numbers as strings, a client id per ingredient), the edit reducer (name, yield, covers, each ingredient's fields, add, delete), `parseQuantity` (comma or dot, `> 0`, else null) and `emptyFields` (04-C5, 04-C6)
 - [ ] Write tests, then add `SheetForm`:
   - Labelled inputs "Nombre", "Rendimiento", "Raciones" and one row per ingredient.
   - Quantities with `inputMode="decimal"` (covers `numeric`), units as a `<select>` with an empty option and the five units, "Estimado" as a checkbox.
