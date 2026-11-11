@@ -32,7 +32,7 @@
   (04-C2, 04-C3)
 
 ## Frontend
-- [ ] Add `sheet/types.ts` (`Unit`, `Ingredient`, `Sheet`, `Draft`). Write tests, then add `createDraft(text)` to `client.ts`: token header, 60s timeout, a check of the response shape (top-level fields, ingredient fields, units in the list) and `ApiError("failed")` for anything else, 422 included (04-C1, 04-C3, 04-C7)
+- [x] Add `sheet/types.ts` (`Unit`, `Ingredient`, `Sheet`, `Draft`). Write tests, then add `createDraft(text)` to `client.ts`: token header, 60s timeout, a check of the response shape (top-level fields, ingredient fields, units in the list) and `ApiError("failed")` for anything else, 422 included (04-C1, 04-C3, 04-C7)
 - [ ] Write tests, then add `useVoiceSheet`, replacing `useTranscription` and moving its tests:
   - Steps `idle | transcribing | structuring | done | no-voice | not-preparation | error`, with both client functions injected.
   - Transcribe only when there is no transcript yet. Empty text stops at `no-voice` without calling `createDraft`.
