@@ -123,6 +123,9 @@ class OpenAIStructurer:
                 input=text,
                 text=self.text_format,
                 max_output_tokens=MAX_OUTPUT_TOKENS,
+                # The Responses API keeps responses by default; we never read them back,
+                # so the chef's recipe is not stored on OpenAI's side.
+                store=False,
             )
         # APITimeoutError subclasses APIConnectionError, so it must be caught first.
         except openai.APITimeoutError:

@@ -484,6 +484,8 @@ def test_openai_structurer_sends_the_text_with_the_prompt_and_strict_schema(
                 }
             },
             "max_output_tokens": MAX_OUTPUT_TOKENS,
+            # The chef's recipe is not kept on OpenAI's side.
+            "store": False,
         }
     ]
 
