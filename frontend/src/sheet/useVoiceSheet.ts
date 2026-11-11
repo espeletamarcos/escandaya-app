@@ -62,6 +62,8 @@ export function useVoiceSheet(transcribeFn: TranscribeFn, createDraftFn: CreateD
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [missing, setMissing] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // The id of the run that produced the current sheet, so a new sheet's form starts clean.
+  const [draftId, setDraftId] = useState<number | null>(null);
   // The state above is for rendering; `run` reads the transcript from this ref,
   // which is up to date even inside a call that started before a render.
   const transcriptRef = useRef<string | null>(null);
@@ -78,6 +80,7 @@ export function useVoiceSheet(transcribeFn: TranscribeFn, createDraftFn: CreateD
       setError(null);
       setSheet(null);
       setMissing([]);
+      setDraftId(null);
 
       let failedStep: FailedStep = "transcribing";
       try {
@@ -105,6 +108,7 @@ export function useVoiceSheet(transcribeFn: TranscribeFn, createDraftFn: CreateD
         }
         setSheet(draft.sheet);
         setMissing(draft.missing);
+        setDraftId(id);
         setStep("done");
       } catch (e) {
         if (outdated()) return;
@@ -127,7 +131,8 @@ export function useVoiceSheet(transcribeFn: TranscribeFn, createDraftFn: CreateD
     setSheet(null);
     setMissing([]);
     setError(null);
+    setDraftId(null);
   }, []);
 
-  return { step, transcript, sheet, missing, error, run, reset };
+  return { step, transcript, sheet, missing, draftId, error, run, reset };
 }

@@ -45,7 +45,7 @@
   }
 }
 
-.transcription {
+.voice-sheet {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -54,7 +54,7 @@
   max-width: 360px;
 }
 
-.transcribe-button {
+.voice-sheet-button {
   padding: 12px 24px;
   border-radius: 8px;
   border: 2px solid var(--accent-border);
@@ -75,14 +75,7 @@
   }
 }
 
-.transcript {
-  align-self: stretch;
-  margin: 0;
-  white-space: pre-wrap;
-  text-align: left;
-}
-
-.transcript-empty {
+.voice-sheet-notice {
   margin: 0;
   font-style: italic;
 }

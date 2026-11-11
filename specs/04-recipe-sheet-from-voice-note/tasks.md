@@ -49,7 +49,7 @@
   - "Falta" on fields marked as missing, appearing and disappearing as the chef edits.
 
   (04-C5, 04-C6)
-- [ ] Write tests, then update `RecordScreen`:
+- [x] Write tests, then update `RecordScreen`:
   - The button "Transcribir y crear ficha", with "Transcribiendo…" and "Creando ficha…" while waiting.
   - Disabled while pending and after `done`, `no-voice` or `not-preparation` until a new recording; enabled after `error`.
   - On `done`, render `SheetForm` keyed by the request id. Never render the transcript.

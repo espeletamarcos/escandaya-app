@@ -47,7 +47,22 @@ describe("useVoiceSheet", () => {
     expect(result.current.transcript).toBeNull();
     expect(result.current.sheet).toBeNull();
     expect(result.current.missing).toEqual([]);
+    expect(result.current.draftId).toBeNull();
     expect(result.current.error).toBeNull();
+  });
+
+  it("gives each sheet the id of the run that produced it", async () => {
+    const { result } = renderHook(() => useVoiceSheet(transcribeOk(), draftOk()));
+
+    await act(async () => result.current.run(audio));
+    const first = result.current.draftId;
+    act(() => result.current.reset());
+    expect(result.current.draftId).toBeNull();
+    await act(async () => result.current.run(audio));
+
+    expect(first).not.toBeNull();
+    expect(result.current.draftId).not.toBeNull();
+    expect(result.current.draftId).not.toBe(first);
   });
 
   it("transcribes, then structures the text, then is done with the sheet (04-C1)", async () => {
