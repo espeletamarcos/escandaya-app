@@ -72,6 +72,13 @@
 
 ## Manual checks
 - [ ] Produce transcripts of real kitchen recordings with `transcribe_trial.py`, run the structuring trial, choose the model, set `STRUCTURING_MODEL` on Fly and record the choice in `docs/product/stack.md` (the Structuring row and the open decision). Confirm the 5,000-char cap against the real lengths. Note results here (04-C8)
+  - 2026-11-11: kept `gpt-5-mini`, the default. The OpenAI project only allows it and `gpt-4o-mini-transcribe`, so the comparison trial was not run; the model was judged on real notes on the iPhone (next item). Recorded in `docs/product/stack.md`.
+  - Pending: the 5,000-char cap. The first real notes were 105 and 139 chars; a full 2-minute note is still needed to confirm it (its `chars=` shows in `fly logs`).
 - [ ] On the deployed app, on the iPhone: dictate a real preparation, check that the sheet is recognisable, fix it by editing (decimal comma included), and check a structuring error with retry. Note results here (04-C1, 04-C5, 04-C6, 04-C7, 04-C8)
-- [ ] Check `fly logs` after creating a sheet: one `structuring` line, and no transcript text or sheet content (04-C8)
+  - 2026-11-11, iPhone: two real preparations dictated. Both came back as recognisable sheets, quickly (about 11 s to create each sheet). The look is poor: left for the styling spec.
+  - Pending: editing with a decimal comma (and how "1.000" g is read), and a structuring error with retry.
+- [x] Check `fly logs` after creating a sheet: one `structuring` line, and no transcript text or sheet content (04-C8)
+  - 2026-11-11: for each of the two sheets, one `transcription` line and one `structuring` line, for example `structuring status=200 chars=139 duration_ms=11445 input_tokens=677 output_tokens=752`. No transcript text, ingredient names or sheet content anywhere in the logs.
+  - Also seen: the Fly account is on the trial, so the machine is stopped after 5 minutes even while in use ("Trial machine stopping"). It restarts on the next request in about 4.5 s. Adding a card to the Fly account removes the limit.
 - [ ] Update the status of spec 04 in `specs/README.md` as it moves to `in progress` and `implemented`
+  - 2026-11-11: `in progress` (all code deployed; manual checks pending above).

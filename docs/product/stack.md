@@ -14,7 +14,7 @@ A lightweight PWA frontend and a Python backend that holds all the logic. Pieces
 | CI | GitHub Actions | Runs lint, tests and build on every push | In the skeleton |
 | Database | SQLite with SQLAlchemy | One restaurant; can move to Postgres | Spec 05 |
 | Speech to text | OpenAI transcription API | Good accuracy with kitchen noise | Spec 03 |
-| Structuring | Claude with structured output (JSON) | Fast and cheap; estimated cost of $1-3/month per restaurant | Spec 04 |
+| Structuring | OpenAI `gpt-5-mini` with structured output (strict JSON schema) | Same key and bill as transcription; about 11 s and 700 input / 550-750 output tokens per sheet on the first real notes | Spec 04 |
 | Hosting | Fly.io, Railway or Render | Automatic HTTPS, required for the microphone | Spec 02 |
 
 ## Repo layout and commands
@@ -62,5 +62,6 @@ Also: API keys only in backend environment variables, and neutral domain names (
   - FastAPI serves the built frontend and the API under `/api`, so no CORS is needed.
 - [x] Transcription model, after testing with real voice notes (spec 03).
   - `gpt-4o-mini-transcribe`, the default of `TRANSCRIPTION_MODEL`.
-- [ ] Claude model, after testing with real voice notes (spec 04).
+- [x] Structuring model, after testing with real voice notes (spec 04).
+  - `gpt-5-mini`, the default of `STRUCTURING_MODEL`. The OpenAI project only allows this model and `gpt-4o-mini-transcribe`, so the comparison in `scripts/structure_trial.py` was not run; the model was checked on real notes on the iPhone instead (2026-11-11).
 - [ ] Replace `httpx` with the client Starlette recommends in tests, when the deprecation warning requires it.
