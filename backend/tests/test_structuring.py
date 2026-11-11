@@ -1,8 +1,10 @@
 import json
 from collections.abc import Iterator
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, get_args
 
 import httpx
+import openai
 import pytest
 from conftest import ClientFactory, FakeStructurer, make_settings
 from fastapi import HTTPException
@@ -10,8 +12,11 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from backend.settings import Settings
+from backend.sheets import Unit
 from backend.structuring import (
+    MAX_OUTPUT_TOKENS,
     MAX_TEXT_CHARS,
+    SYSTEM_PROMPT,
     OpenAIStructurer,
     Structurer,
     StructuringError,
@@ -41,7 +46,7 @@ def test_get_structurer_uses_the_key_and_the_configured_model() -> None:
     structurer = get_structurer(settings)
 
     assert isinstance(structurer, OpenAIStructurer)
-    assert structurer.api_key == "sk-test"
+    assert structurer.client.api_key == "sk-test"
     assert structurer.model == "some-structuring-model"
 
 
@@ -402,3 +407,201 @@ def test_strict_schema_requires_fields_with_defaults_and_closes_open_models() ->
         "required": ["note", "count"],
         "additionalProperties": False,
     }
+
+
+# --- OpenAIStructurer (the SDK call is stubbed; tests never reach OpenAI) ---
+
+OPENAI_REQUEST = httpx.Request("POST", "https://api.openai.com/v1/responses")
+RAW_ANSWER = '{"is_preparation": false, "sheet": null}'
+USAGE = SimpleNamespace(input_tokens=900, output_tokens=400)
+
+
+def message(*content: SimpleNamespace) -> SimpleNamespace:
+    return SimpleNamespace(type="message", content=list(content))
+
+
+def output_text(text: str) -> SimpleNamespace:
+    return SimpleNamespace(type="output_text", text=text)
+
+
+def openai_response(
+    output: list[SimpleNamespace] | None = None,
+    status: str = "completed",
+    usage: SimpleNamespace | None = USAGE,
+) -> SimpleNamespace:
+    """The parts of an SDK `Response` the structurer reads."""
+    if output is None:
+        output = [message(output_text(RAW_ANSWER))]
+    return SimpleNamespace(status=status, output=output, usage=usage)
+
+
+def stub_responses(
+    monkeypatch: pytest.MonkeyPatch,
+    structurer: OpenAIStructurer,
+    response: SimpleNamespace | None = None,
+    error: Exception | None = None,
+) -> list[dict[str, Any]]:
+    """Replace the SDK call with a stub that records its arguments."""
+    calls: list[dict[str, Any]] = []
+
+    def create(**kwargs: Any) -> SimpleNamespace:
+        calls.append(kwargs)
+        if error is not None:
+            raise error
+        return openai_response() if response is None else response
+
+    monkeypatch.setattr(structurer.client.responses, "create", create)
+    return calls
+
+
+def test_openai_client_has_a_45s_timeout_and_no_retries() -> None:
+    structurer = OpenAIStructurer(api_key="sk-test", model="some-model")
+
+    assert structurer.client.timeout == 45.0
+    assert structurer.client.max_retries == 0
+
+
+def test_openai_structurer_sends_the_text_with_the_prompt_and_strict_schema(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    structurer = OpenAIStructurer(api_key="sk-test", model="some-model")
+    calls = stub_responses(monkeypatch, structurer)
+
+    structurer.structure("dos kilos de atún")
+
+    # No `temperature`: reasoning models reject it.
+    assert calls == [
+        {
+            "model": "some-model",
+            "instructions": SYSTEM_PROMPT,
+            "input": "dos kilos de atún",
+            "text": {
+                "format": {
+                    "type": "json_schema",
+                    "name": "draft",
+                    "schema": strict_schema(),
+                    "strict": True,
+                }
+            },
+            "max_output_tokens": MAX_OUTPUT_TOKENS,
+        }
+    ]
+
+
+def test_max_output_tokens_leave_room_for_100_ingredients() -> None:
+    # About 30 tokens per ingredient as JSON, plus room for reasoning tokens.
+    assert MAX_OUTPUT_TOKENS >= 100 * 30 * 2
+
+
+def test_openai_structurer_returns_the_raw_text_and_tokens(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    structurer = OpenAIStructurer(api_key="sk-test", model="some-model")
+    stub_responses(monkeypatch, structurer)
+
+    assert structurer.structure("texto") == StructuringResult(
+        raw=RAW_ANSWER, input_tokens=900, output_tokens=400
+    )
+
+
+def test_openai_structurer_skips_reasoning_items_and_joins_text_parts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    structurer = OpenAIStructurer(api_key="sk-test", model="some-model")
+    reasoning = SimpleNamespace(type="reasoning", content=None)
+    answer = message(output_text('{"is_preparation": '), output_text("false, ...}"))
+    stub_responses(monkeypatch, structurer, openai_response([reasoning, answer]))
+
+    assert structurer.structure("texto").raw == '{"is_preparation": false, ...}'
+
+
+def test_openai_structurer_without_usage_has_no_tokens(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    structurer = OpenAIStructurer(api_key="sk-test", model="some-model")
+    stub_responses(monkeypatch, structurer, openai_response(usage=None))
+
+    result = structurer.structure("texto")
+
+    assert (result.input_tokens, result.output_tokens) == (None, None)
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        openai_response([message(SimpleNamespace(type="refusal", refusal="No."))]),
+        openai_response(
+            [message(output_text(RAW_ANSWER), SimpleNamespace(type="refusal", refusal="No."))]
+        ),
+        openai_response(status="incomplete"),
+        openai_response([]),
+        openai_response([SimpleNamespace(type="reasoning", content=None)]),
+        openai_response([message(output_text(""))]),
+    ],
+    ids=[
+        "refusal",
+        "text-and-refusal",
+        "incomplete",
+        "no-output",
+        "reasoning-only",
+        "empty-text",
+    ],
+)
+def test_unusable_answers_become_structuring_error(
+    monkeypatch: pytest.MonkeyPatch, response: SimpleNamespace
+) -> None:
+    structurer = OpenAIStructurer(api_key="sk-test", model="some-model")
+    stub_responses(monkeypatch, structurer, response)
+
+    with pytest.raises(StructuringError) as raised:
+        structurer.structure("texto")
+
+    assert not isinstance(raised.value, StructuringTimeout)
+
+
+def test_openai_timeout_becomes_structuring_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    structurer = OpenAIStructurer(api_key="sk-test", model="some-model")
+    stub_responses(
+        monkeypatch, structurer, error=openai.APITimeoutError(request=OPENAI_REQUEST)
+    )
+
+    with pytest.raises(StructuringTimeout):
+        structurer.structure("texto")
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        openai.APIConnectionError(request=OPENAI_REQUEST),
+        openai.APIStatusError(
+            SECRET_MESSAGE,
+            response=httpx.Response(401, request=OPENAI_REQUEST),
+            body=None,
+        ),
+        # A schema strict mode rejects comes back as a 400.
+        openai.BadRequestError(
+            SECRET_MESSAGE,
+            response=httpx.Response(400, request=OPENAI_REQUEST),
+            body=None,
+        ),
+    ],
+    ids=["connection", "status", "bad-request"],
+)
+def test_openai_failures_become_structuring_error(
+    monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    structurer = OpenAIStructurer(api_key="sk-test", model="some-model")
+    stub_responses(monkeypatch, structurer, error=error)
+
+    with pytest.raises(StructuringError) as raised:
+        structurer.structure("texto")
+
+    assert not isinstance(raised.value, StructuringTimeout)
+    assert "sk-secret" not in str(raised.value)
+    assert raised.value.__cause__ is None
+
+
+def test_the_prompt_names_every_unit() -> None:
+    # The schema follows `Unit` by itself; the prompt has to be kept in step by hand.
+    for unit in get_args(Unit):
+        assert f'"{unit}"' in SYSTEM_PROMPT

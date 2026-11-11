@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Annotated, Any, Protocol
 
+import openai
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, StringConstraints, ValidationError
 from starlette.concurrency import run_in_threadpool
@@ -52,16 +53,105 @@ class Structurer(Protocol):
     def structure(self, text: str) -> StructuringResult: ...
 
 
+OPENAI_TIMEOUT_SECONDS = 45.0
+
+# 100 ingredients are about 3,000 tokens of JSON. Reasoning tokens count against the
+# same limit, so leave several times that. Only the tokens used are billed.
+MAX_OUTPUT_TOKENS = 16_000
+
+SYSTEM_PROMPT = """\
+You turn a chef's dictated note, transcribed from Spanish speech, into the recipe sheet \
+of one preparation. Answer only with JSON that matches the schema.
+
+Not a preparation:
+- If the text does not describe a preparation (small talk, noise, an unrelated \
+question), answer is_preparation false and sheet null.
+
+The sheet:
+- name: the name of the preparation, in Spanish, as the chef says it. If no name is \
+said, a short Spanish name for the preparation.
+- yield: how much the preparation makes in total.
+- covers: how many servings ("raciones") it gives.
+- ingredients: every ingredient said, in the order said, with its name in Spanish as \
+dictated.
+
+Units. Use only these:
+- "g" grams, "kg" kilograms, "ml" millilitres, "l" litres, "ud" units or pieces.
+- Convert what is said to them: "2 kilos" is 2 kg, "medio litro" is 0.5 l, \
+"una docena" is 12 ud, "tres huevos" is 3 ud.
+- A unit that is not in the list and has no exact conversion ("un puñado", \
+"una pizca", "un chorrito"): quantity and unit are null, and the name is kept as \
+dictated.
+
+Estimated:
+- Approximate words ("unos", "unas", "más o menos", "aproximadamente") set estimated \
+to true.
+- A range ("30 o 40 raciones", "entre 200 y 300 gramos") gives the lower value, with \
+estimated true.
+- Otherwise estimated is false.
+
+Never invent:
+- Do not add ingredients, quantities, units, a yield or covers that the chef did not \
+say. Anything not said is null, with estimated false.
+"""
+
+
 class OpenAIStructurer:
-    """Structures transcripts with the OpenAI API. The call itself comes in a later
-    task of spec 04; until then no route uses it."""
+    """Structures transcripts with the OpenAI Responses API and a strict JSON schema."""
 
     def __init__(self, api_key: str, model: str) -> None:
-        self.api_key = api_key
         self.model = model
+        # No SDK retries: a retry could double the wait past the frontend's 60s timeout.
+        self.client = openai.OpenAI(
+            api_key=api_key, timeout=OPENAI_TIMEOUT_SECONDS, max_retries=0
+        )
+        self.text_format = {
+            "format": {
+                "type": "json_schema",
+                "name": "draft",
+                "schema": strict_schema(),
+                "strict": True,
+            }
+        }
 
     def structure(self, text: str) -> StructuringResult:
-        raise NotImplementedError
+        # No `temperature`: reasoning models reject it.
+        try:
+            response = self.client.responses.create(
+                model=self.model,
+                instructions=SYSTEM_PROMPT,
+                input=text,
+                text=self.text_format,
+                max_output_tokens=MAX_OUTPUT_TOKENS,
+            )
+        # APITimeoutError subclasses APIConnectionError, so it must be caught first.
+        except openai.APITimeoutError:
+            raise StructuringTimeout from None
+        except openai.OpenAIError:
+            raise StructuringError from None
+
+        # Incomplete (out of tokens, or filtered): the JSON may be cut off.
+        if response.status != "completed":
+            raise StructuringError
+        parts: list[str] = []
+        for item in response.output:
+            if item.type != "message":
+                continue
+            for content in item.content:
+                if content.type == "refusal":
+                    raise StructuringError
+                if content.type == "output_text":
+                    parts.append(content.text)
+        raw = "".join(parts)
+        if not raw:
+            raise StructuringError
+
+        usage = response.usage
+        return StructuringResult(
+            raw=raw,
+            input_tokens=None if usage is None else usage.input_tokens,
+            output_tokens=None if usage is None else usage.output_tokens,
+        )
 
 
 @lru_cache(maxsize=1)
