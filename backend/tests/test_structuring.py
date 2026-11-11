@@ -1,10 +1,13 @@
 import json
+from collections.abc import Iterator
+from typing import Any
 
 import httpx
 import pytest
 from conftest import ClientFactory, FakeStructurer, make_settings
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from pydantic import BaseModel
 
 from backend.settings import Settings
 from backend.structuring import (
@@ -15,6 +18,7 @@ from backend.structuring import (
     StructuringResult,
     StructuringTimeout,
     get_structurer,
+    strict_schema,
 )
 
 
@@ -305,3 +309,96 @@ def test_invalid_model_output_returns_a_generic_error(
     # Neither the model output nor the validation error reaches the client.
     assert "Atún" not in response.text
     assert "cucharada" not in response.text
+
+
+# The keywords the provider's strict mode accepts that we keep; everything else is dropped.
+STRICT_KEYWORDS = {
+    "type",
+    "properties",
+    "required",
+    "additionalProperties",
+    "items",
+    "enum",
+    "anyOf",
+    "$ref",
+    "$defs",
+}
+
+
+def schema_nodes(node: object) -> Iterator[dict[str, Any]]:
+    """Every schema in the tree, skipping the name maps of `properties` and `$defs`."""
+    if not isinstance(node, dict):
+        return
+    yield node
+    for key, value in node.items():
+        if key in ("properties", "$defs"):
+            for child in value.values():
+                yield from schema_nodes(child)
+        elif key == "items":
+            yield from schema_nodes(value)
+        elif key == "anyOf":
+            for child in value:
+                yield from schema_nodes(child)
+
+
+def test_strict_schema_keeps_only_accepted_keywords() -> None:
+    nodes = list(schema_nodes(strict_schema()))
+
+    assert len(nodes) > 10
+    for node in nodes:
+        assert set(node) <= STRICT_KEYWORDS, node
+
+
+def test_strict_schema_closes_every_object_and_requires_every_property() -> None:
+    objects = [node for node in schema_nodes(strict_schema()) if node.get("type") == "object"]
+
+    # The wrapper, Sheet, Yield, Covers and Ingredient.
+    assert len(objects) == 5
+    for node in objects:
+        assert node["additionalProperties"] is False
+        assert node["required"] == list(node["properties"])
+
+
+def test_strict_schema_describes_the_model_output() -> None:
+    schema = strict_schema()
+    defs = schema["$defs"]
+    unit = {"anyOf": [{"type": "string", "enum": ["g", "kg", "ml", "l", "ud"]}, {"type": "null"}]}
+    quantity = {"anyOf": [{"type": "number"}, {"type": "null"}]}
+
+    assert schema["properties"] == {
+        "is_preparation": {"type": "boolean"},
+        "sheet": {"anyOf": [{"$ref": "#/$defs/Sheet"}, {"type": "null"}]},
+    }
+    # The JSON name `yield`, not the Python field `yield_`.
+    assert list(defs["Sheet"]["properties"]) == ["name", "yield", "covers", "ingredients"]
+    assert defs["Sheet"]["properties"]["ingredients"] == {
+        "type": "array",
+        "items": {"$ref": "#/$defs/Ingredient"},
+    }
+    assert defs["Ingredient"]["properties"]["unit"] == unit
+    assert defs["Ingredient"]["properties"]["quantity"] == quantity
+    assert defs["Yield"]["properties"]["unit"] == unit
+    assert defs["Covers"]["properties"]["value"] == {
+        "anyOf": [{"type": "integer"}, {"type": "null"}]
+    }
+
+
+class _WithDefault(BaseModel):
+    note: str = "none"
+    count: int | None = None
+
+
+def test_strict_schema_requires_fields_with_defaults_and_closes_open_models() -> None:
+    # Strict mode has no optional fields: a field with a default must be sent too
+    # (null where allowed). The model has no extra="forbid", yet the schema is closed.
+    schema = strict_schema(_WithDefault)
+
+    assert schema == {
+        "type": "object",
+        "properties": {
+            "note": {"type": "string"},
+            "count": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+        },
+        "required": ["note", "count"],
+        "additionalProperties": False,
+    }

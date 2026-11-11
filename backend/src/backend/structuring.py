@@ -2,7 +2,7 @@ import logging
 import time
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Annotated, Protocol
+from typing import Annotated, Any, Protocol
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, StringConstraints, ValidationError
@@ -86,13 +86,47 @@ class DraftRequest(BaseModel):
 
 
 class DraftOutput(BaseModel):
-    """The shape the model must answer with. `strict_schema()` will build the schema
+    """The shape the model must answer with. `strict_schema()` builds the schema
     sent to the provider from this same model."""
 
     model_config = ConfigDict(extra="forbid", strict=True)
 
     is_preparation: bool
     sheet: Sheet | None
+
+
+# What strict mode needs to constrain the shape. Titles, descriptions, defaults and the
+# numeric and length limits are dropped: Pydantic enforces the limits on our side.
+_STRICT_KEYWORDS = ("type", "enum", "anyOf", "$ref", "items")
+
+
+def _strict(node: dict[str, Any]) -> dict[str, Any]:
+    """One schema node, keeping only `_STRICT_KEYWORDS`, with its children made strict."""
+    strict = {key: node[key] for key in _STRICT_KEYWORDS if key in node}
+    if "anyOf" in strict:
+        strict["anyOf"] = [_strict(option) for option in strict["anyOf"]]
+    if "items" in strict:
+        strict["items"] = _strict(strict["items"])
+    if "properties" in node:
+        properties = {name: _strict(child) for name, child in node["properties"].items()}
+        strict["properties"] = properties
+        # Strict mode has no optional fields: a field that can be absent must be nullable.
+        strict["required"] = list(properties)
+        strict["additionalProperties"] = False
+    return strict
+
+
+def strict_schema(model: type[BaseModel] = DraftOutput) -> dict[str, Any]:
+    """The JSON schema of `model` in the form the provider's strict mode accepts.
+
+    Generated from the Pydantic model, so the units and fields have one source.
+    JSON names are used (`yield`, not `yield_`).
+    """
+    schema = model.model_json_schema(by_alias=True)
+    strict = _strict(schema)
+    if "$defs" in schema:
+        strict["$defs"] = {name: _strict(child) for name, child in schema["$defs"].items()}
+    return strict
 
 
 class DraftResponse(BaseModel):
