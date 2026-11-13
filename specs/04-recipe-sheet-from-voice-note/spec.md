@@ -1,6 +1,6 @@
 # 04 – Recipe sheet from a voice note
 
-Status: in progress
+Status: implemented
 
 ## Why
 The chef can dictate a preparation and read it back as text (spec 03), but text is not a recipe sheet. This spec turns the voice note into an editable sheet in one step: the transcript goes to an OpenAI model, our code validates the JSON it returns, and the chef sees the sheet with what is missing and can fix it by hand. We learn whether the sheets are good enough before storing anything (spec 05).
