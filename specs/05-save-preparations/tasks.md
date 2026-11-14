@@ -16,9 +16,9 @@
   - A known `confirm_id` returns the saved preparation with `200`, and an `IntegrityError` from a race does the same after a rollback.
 
   (05-C2)
-- [ ] Write tests, then add `GET /api/preparations` (newest first, with `id`, `name`, `covers`, `missing_count`, `confirmed_at`) and `GET /api/preparations/{id}` (the confirm response shape; 404 for an unknown or malformed id). All three endpoints return 401 without a token (05-C3)
-- [ ] Write tests with `caplog`, then add the log line `preparations action=%s status=%d duration_ms=%s` to the three endpoints. Assert that the transcript and the ingredient names never appear in the logs, including after a 422 (05-C7)
-- [ ] Write a test, then add `backend/backup.py`: `python -m backend.backup <destination>` copies the database with SQLite's backup API (05-C8)
+- [x] Write tests, then add `GET /api/preparations` (newest first, with `id`, `name`, `covers`, `missing_count`, `confirmed_at`) and `GET /api/preparations/{id}` (the confirm response shape; 404 for an unknown or malformed id). All three endpoints return 401 without a token (05-C3)
+- [x] Write tests with `caplog`, then add the log line `preparations action=%s status=%d duration_ms=%s` to the three endpoints. Assert that the transcript and the ingredient names never appear in the logs, including after a 422 (05-C7)
+- [x] Write a test, then add `backend/backup.py`: `python -m backend.backup <destination>` copies the database with SQLite's backup API (05-C8)
 
 ## Frontend
 - [ ] Write tests, then add `confirmPreparation`, `listPreparations` and `getPreparation` to `client.ts`, with 20s timeouts, response shape checks reusing `isSheet`, and the `invalid` error kind for 422. Add the types in `frontend/src/preparations/types.ts` (05-C1, 05-C4)

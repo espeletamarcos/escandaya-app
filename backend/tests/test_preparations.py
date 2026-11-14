@@ -324,3 +324,153 @@ def test_confirm_needs_a_token(client: TestClient) -> None:
 
     assert response.status_code == 401
     assert count_saved(client) == 0
+
+
+# --- Reading: list and detail -----------------------------------------------------
+
+MONDAY = datetime(2026, 11, 9, 10, 0, tzinfo=UTC)
+
+
+def confirm_at(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    when: datetime,
+    confirm_id: str,
+    sheet: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    monkeypatch.setattr(preparations, "now", lambda: when)
+    response = confirm(client, make_body(confirm_id=confirm_id, sheet=sheet or make_sheet()))
+    assert response.status_code == 201
+    return response.json()
+
+
+def uuid_for(number: int) -> str:
+    return f"00000000-0000-4000-8000-{number:012d}"
+
+
+def named(name: str, **changes: Any) -> dict[str, Any]:
+    sheet = make_sheet()
+    sheet["name"] = name
+    sheet.update(changes)
+    return sheet
+
+
+def test_the_list_is_empty_at_first(client: TestClient) -> None:
+    response = client.get("/api/preparations", headers=AUTH)
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_the_list_has_the_summary_of_each_preparation(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    saved = confirm_at(client, monkeypatch, MONDAY, uuid_for(1))
+
+    response = client.get("/api/preparations", headers=AUTH)
+
+    assert response.json() == [
+        {
+            "id": saved["id"],
+            "name": "Tartar de atún",
+            "covers": 40,
+            "missing_count": 2,
+            "confirmed_at": "2026-11-09T10:00:00Z",
+        }
+    ]
+
+
+def test_the_list_shows_covers_as_null_when_missing(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sheet = named("Sin raciones", covers={"value": None, "estimated": False}, ingredients=[])
+    confirm_at(client, monkeypatch, MONDAY, uuid_for(1), sheet)
+
+    [summary] = client.get("/api/preparations", headers=AUTH).json()
+
+    assert summary["covers"] is None
+    assert summary["missing_count"] == 1
+
+
+def test_the_list_is_newest_first(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    confirm_at(client, monkeypatch, MONDAY, uuid_for(1), named("Lunes"))
+    confirm_at(client, monkeypatch, MONDAY + timedelta(days=2), uuid_for(2), named("Miércoles"))
+    confirm_at(client, monkeypatch, MONDAY + timedelta(days=1), uuid_for(3), named("Martes"))
+
+    names = [item["name"] for item in client.get("/api/preparations", headers=AUTH).json()]
+
+    assert names == ["Miércoles", "Martes", "Lunes"]
+
+
+def test_preparations_confirmed_at_the_same_time_keep_their_order(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    confirm_at(client, monkeypatch, MONDAY, uuid_for(1), named("Primera"))
+    confirm_at(client, monkeypatch, MONDAY, uuid_for(2), named("Segunda"))
+
+    names = [item["name"] for item in client.get("/api/preparations", headers=AUTH).json()]
+
+    assert names == ["Segunda", "Primera"]
+
+
+def test_two_preparations_with_the_same_name_are_both_listed(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    confirm_at(client, monkeypatch, MONDAY, uuid_for(1))
+    confirm_at(client, monkeypatch, MONDAY + timedelta(hours=1), uuid_for(2))
+
+    listed = client.get("/api/preparations", headers=AUTH).json()
+
+    assert [item["name"] for item in listed] == ["Tartar de atún", "Tartar de atún"]
+    assert listed[0]["confirmed_at"] != listed[1]["confirmed_at"]
+
+
+def test_the_detail_returns_the_saved_sheet_with_its_missing_data(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    saved = confirm_at(client, monkeypatch, MONDAY, uuid_for(1))
+
+    response = client.get(f"/api/preparations/{saved['id']}", headers=AUTH)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": saved["id"],
+        "confirmed_at": "2026-11-09T10:00:00Z",
+        "sheet": make_sheet(),
+        "missing": ["ingredients.1.quantity", "ingredients.1.unit"],
+    }
+
+
+def test_the_detail_does_not_return_the_transcript(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    saved = confirm_at(client, monkeypatch, MONDAY, uuid_for(1))
+
+    response = client.get(f"/api/preparations/{saved['id']}", headers=AUTH)
+
+    assert "transcript" not in response.json()
+    assert TRANSCRIPT not in response.text
+
+
+@pytest.mark.parametrize(
+    "preparation_id",
+    ["999", "0", "-1", "abc", "1.5", "1e3", " 1", "99999999999999999999999"],
+)
+def test_an_unknown_or_malformed_id_is_not_found(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, preparation_id: str
+) -> None:
+    confirm_at(client, monkeypatch, MONDAY, uuid_for(1))
+
+    response = client.get(f"/api/preparations/{preparation_id}", headers=AUTH)
+
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize("path", ["/api/preparations", "/api/preparations/1"])
+def test_reading_needs_a_token(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, path: str
+) -> None:
+    confirm_at(client, monkeypatch, MONDAY, uuid_for(1))
+
+    assert client.get(path).status_code == 401
+    assert client.get(path, headers={"Authorization": "Bearer wrong"}).status_code == 401
