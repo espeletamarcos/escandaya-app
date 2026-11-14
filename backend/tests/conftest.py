@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from backend.main import create_app
 from backend.settings import (
+    DEFAULT_DATABASE_PATH,
     DEFAULT_STRUCTURING_MODEL,
     DEFAULT_TRANSCRIPTION_MODEL,
     Settings,
@@ -26,6 +27,8 @@ def make_settings(
         openai_api_key=openai_api_key,
         transcription_model=DEFAULT_TRANSCRIPTION_MODEL,
         structuring_model=DEFAULT_STRUCTURING_MODEL,
+        # Not used until the database is wired into the app; then each test gets its own.
+        database_path=DEFAULT_DATABASE_PATH,
     )
 
 
