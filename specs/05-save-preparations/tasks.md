@@ -10,7 +10,7 @@
   (05-C2)
 - [x] Write tests, then set up Alembic inside the package (`backend/src/backend/migrations/`, `render_as_batch=True`, engine passed from code), add the first migration with both tables, and `migrate(engine)`. Migrating twice on the same file does not fail and keeps a saved row (05-C5)
 - [x] Write tests, then change `create_app(static_dir, database_path)`: build the engine, run `migrate()` in the lifespan, and give `make_client` a temporary database per test that runs the app's startup. Starting the app twice on one file keeps its data (05-C5)
-- [ ] Write tests, then add `POST /api/preparations` on the protected router:
+- [x] Write tests, then add `POST /api/preparations` on the protected router:
   - Body `{confirm_id, transcript, sheet}` with `extra="forbid"`; the transcript trimmed, 1–5,000 chars; the sheet validated with the spec 04 `Sheet` model. Otherwise 422.
   - Save the preparation, its ingredients in order and `confirmed_at` (UTC). Return `201 {id, confirmed_at, sheet, missing}`, with `missing` from `missing_fields`.
   - A known `confirm_id` returns the saved preparation with `200`, and an `IntegrityError` from a race does the same after a rollback.

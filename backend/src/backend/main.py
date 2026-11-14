@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
-from backend import structuring, transcription
+from backend import preparations, structuring, transcription
 from backend.auth import require_token
 from backend.db import make_engine, migrate
 from backend.logs import configure_logging
@@ -30,6 +30,7 @@ def session() -> None:
 
 protected.include_router(transcription.router)
 protected.include_router(structuring.router)
+protected.include_router(preparations.router)
 
 
 def default_static_dir() -> Path | None:
