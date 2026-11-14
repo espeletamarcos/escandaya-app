@@ -24,7 +24,7 @@ A spec is `implemented` when every acceptance criterion has a passing test or a 
 | 02 | Deploy with HTTPS | The app opens from a real phone | implemented |
 | 03 | Transcribe a voice note | Audio goes to the backend and the text is shown. Includes minimal protection: a fixed access token in the link and spending caps in the OpenAI and Anthropic consoles | implemented |
 | 04 | Recipe sheet from a voice note | Transcribing creates an editable sheet from the LLM's validated output, with its missing data. Nothing is stored | implemented |
-| 05 | Save preparations | Confirming the sheet saves it, and saved preparations are listed. Introduces the database on a persistent volume | draft |
+| 05 | Save preparations | Confirming the sheet saves it, and saved preparations are listed. Introduces the database on a persistent volume | approved |
 | 06 | Prices by voice | Dictated prices are matched to ingredients | not started |
 | 07 | Cost per cover | Cost of each preparation and total for the menu, with confirmed vs estimated share | not started |
 | 08 | Access and limits | Daily call cap per token, logging of calls and their cost | not started |
