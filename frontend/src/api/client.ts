@@ -1,4 +1,5 @@
 import { clearToken, getToken } from "../auth/token";
+import type { ConfirmInput, PreparationSummary, SavedPreparation } from "../preparations/types";
 import { type Draft, type Ingredient, type Sheet, type Unit, UNITS } from "../sheet/types";
 
 const API_BASE = "/api";
@@ -9,10 +10,13 @@ export const TRANSCRIBE_TIMEOUT_MS = 90_000;
 export const SESSION_TIMEOUT_MS = 10_000;
 // The backend gives up on OpenAI at 45s; the machine is already warm after transcribing.
 export const DRAFT_TIMEOUT_MS = 60_000;
+// Saving and reading make no provider call, but the machine may be starting cold.
+export const PREPARATIONS_TIMEOUT_MS = 20_000;
 
 /** What went wrong, so the UI can show a readable message for each case. */
 export type ApiErrorKind =
   | "unauthorized"
+  | "invalid"
   | "too-large"
   | "unsupported"
   | "failed"
@@ -60,6 +64,8 @@ function errorForStatus(status: number): ApiErrorKind {
       return "too-large";
     case 415:
       return "unsupported";
+    case 422:
+      return "invalid";
     case 504:
       return "timeout";
     default:
@@ -233,6 +239,95 @@ export async function createDraft(text: string): Promise<Draft> {
       }
       return body;
     },
+  );
+}
+
+// --- Preparations (spec 05) --------------------------------------------------------
+
+/** A date the browser can read, as the backend sends it (ISO 8601). */
+function isTimestamp(value: unknown): value is string {
+  return typeof value === "string" && !Number.isNaN(Date.parse(value));
+}
+
+function isId(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) > 0;
+}
+
+function isSavedPreparation(value: unknown): value is SavedPreparation {
+  return (
+    isObject(value) &&
+    isId(value.id) &&
+    isTimestamp(value.confirmed_at) &&
+    isSheet(value.sheet) &&
+    Array.isArray(value.missing) &&
+    value.missing.every((path) => typeof path === "string")
+  );
+}
+
+function isSummary(value: unknown): value is PreparationSummary {
+  return (
+    isObject(value) &&
+    isId(value.id) &&
+    typeof value.name === "string" &&
+    isNumberOrNull(value.covers) &&
+    Number.isInteger(value.missing_count) &&
+    (value.missing_count as number) >= 0 &&
+    isTimestamp(value.confirmed_at)
+  );
+}
+
+async function readSaved(response: Response): Promise<SavedPreparation> {
+  const body: unknown = await response.json();
+  if (!isSavedPreparation(body)) {
+    throw new Error("Unexpected preparation response");
+  }
+  return body;
+}
+
+/**
+ * Save the edited sheet. Sending the same `confirmId` again returns the copy
+ * already saved (200 instead of 201), so a retry never saves a second copy.
+ */
+export async function confirmPreparation({
+  confirmId,
+  transcript,
+  sheet,
+}: ConfirmInput): Promise<SavedPreparation> {
+  return protectedRequest(
+    "/preparations",
+    {
+      method: "POST",
+      body: JSON.stringify({ confirm_id: confirmId, transcript, sheet }),
+      headers: { "Content-Type": "application/json" },
+    },
+    PREPARATIONS_TIMEOUT_MS,
+    readSaved,
+  );
+}
+
+/** The saved preparations, newest first. */
+export async function listPreparations(): Promise<PreparationSummary[]> {
+  return protectedRequest(
+    "/preparations",
+    { method: "GET" },
+    PREPARATIONS_TIMEOUT_MS,
+    async (response) => {
+      const body: unknown = await response.json();
+      if (!Array.isArray(body) || !body.every(isSummary)) {
+        throw new Error("Unexpected preparation list response");
+      }
+      return body;
+    },
+  );
+}
+
+/** One saved preparation in full. An unknown id fails with `failed` (404). */
+export async function getPreparation(id: number): Promise<SavedPreparation> {
+  return protectedRequest(
+    `/preparations/${encodeURIComponent(String(id))}`,
+    { method: "GET" },
+    PREPARATIONS_TIMEOUT_MS,
+    readSaved,
   );
 }
 

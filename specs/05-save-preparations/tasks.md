@@ -21,8 +21,8 @@
 - [x] Write a test, then add `backend/backup.py`: `python -m backend.backup <destination>` copies the database with SQLite's backup API (05-C8)
 
 ## Frontend
-- [ ] Write tests, then add `confirmPreparation`, `listPreparations` and `getPreparation` to `client.ts`, with 20s timeouts, response shape checks reusing `isSheet`, and the `invalid` error kind for 422. Add the types in `frontend/src/preparations/types.ts` (05-C1, 05-C4)
-- [ ] Write tests, then add `toSheet(editable)` and `canConfirm(editable)` to `sheetEditor.ts`: trimmed names, unreadable numbers as `null`, the empty unit as `null`, and no confirm while a name is empty (05-C1)
+- [x] Write tests, then add `confirmPreparation`, `listPreparations` and `getPreparation` to `client.ts`, with 20s timeouts, response shape checks reusing `isSheet`, and the `invalid` error kind for 422. Add the types in `frontend/src/preparations/types.ts` (05-C1, 05-C4)
+- [x] Write tests, then add `toSheet(editable)` and `canConfirm(editable)` to `sheetEditor.ts`: trimmed names, unreadable numbers as `null`, the empty unit as `null`, and no confirm while a name is empty (05-C1)
 - [ ] Write tests, then add `useConfirm`: one `crypto.randomUUID()` per mount, a pending guard against double taps, Spanish error messages per error kind, the same id on retry, and `onSaved` after a success (05-C1)
 - [ ] Write tests, then add the "Confirmar" button to `SheetForm` (disabled while confirming or when `canConfirm` is false, "Guardando…" while pending, the error shown and the edits kept), and render it from `RecordScreen` through a `DraftSheet` component keyed by `draftId` (05-C1)
 - [ ] Write tests, then add `SheetView`: the sheet read-only, with "(estimado)" on estimated values and "Falta" on each path in the backend's `missing` list (05-C4)
