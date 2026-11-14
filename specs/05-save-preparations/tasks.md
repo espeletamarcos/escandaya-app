@@ -25,9 +25,9 @@
 - [x] Write tests, then add `toSheet(editable)` and `canConfirm(editable)` to `sheetEditor.ts`: trimmed names, unreadable numbers as `null`, the empty unit as `null`, and no confirm while a name is empty (05-C1)
 - [x] Write tests, then add `useConfirm`: one `crypto.randomUUID()` per mount, a pending guard against double taps, Spanish error messages per error kind, the same id on retry, and `onSaved` after a success (05-C1)
 - [x] Write tests, then add the "Confirmar" button to `SheetForm` (disabled while confirming or when `canConfirm` is false, "Guardando…" while pending, the error shown and the edits kept), and render it from `RecordScreen` through a `DraftSheet` component keyed by `draftId` (05-C1)
-- [ ] Write tests, then add `SheetView`: the sheet read-only, with "(estimado)" on estimated values and "Falta" on each path in the backend's `missing` list (05-C4)
-- [ ] Write tests, then add `PreparationsScreen` (loading, error with "Reintentar", "Aún no hay preparaciones", the list with name, covers, missing count and date, and the "Ficha guardada" notice) and `PreparationScreen` (one preparation through `SheetView`, with "Volver") (05-C4)
-- [ ] Write tests, then add the views to `App`: "Grabar" and "Preparaciones" buttons, `RecordScreen` kept mounted while the list is open, opening and leaving a preparation, and after a save, a new `RecordScreen` and the list with "Ficha guardada" (05-C1, 05-C4)
+- [x] Write tests, then add `SheetView`: the sheet read-only, with "(estimado)" on estimated values and "Falta" on each path in the backend's `missing` list (05-C4)
+- [x] Write tests, then add `PreparationsScreen` (loading, error with "Reintentar", "Aún no hay preparaciones", the list with name, covers, missing count and date, and the "Ficha guardada" notice) and `PreparationScreen` (one preparation through `SheetView`, with "Volver") (05-C4)
+- [x] Write tests, then add the views to `App`: "Nueva ficha" and "Preparaciones" buttons ("Grabar" is already the record button), `RecordScreen` kept mounted while the list is open, opening and leaving a preparation, and after a save, a new `RecordScreen` and the list with "Ficha guardada" (05-C1, 05-C4)
 
 ## Fly, backups and checks
 - [ ] With your go-ahead, create the volume (`fly volumes create escandaya_data --region cdg --size 1`). Add `[mounts]` and `DATABASE_PATH` to `fly.toml`, and the 401 check for `GET /api/preparations` to `scripts/smoke.sh`. Deploy, recreating the machine if the mount cannot be added to the current one (05-C6)
