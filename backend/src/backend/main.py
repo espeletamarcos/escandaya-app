@@ -1,4 +1,6 @@
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
@@ -6,7 +8,9 @@ from fastapi.responses import FileResponse
 
 from backend import structuring, transcription
 from backend.auth import require_token
+from backend.db import make_engine, migrate
 from backend.logs import configure_logging
+from backend.settings import get_settings
 
 configure_logging()
 
@@ -35,8 +39,25 @@ def default_static_dir() -> Path | None:
     return path if path.is_dir() else None
 
 
-def create_app(static_dir: Path | None) -> FastAPI:
-    app = FastAPI()
+def create_app(static_dir: Path | None, database_path: Path) -> FastAPI:
+    """The app, serving the built frontend from `static_dir` if given.
+
+    The database at `database_path` is opened and migrated when the app starts, not
+    when it is built, so importing the app never creates files.
+    """
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        engine = make_engine(database_path)
+        # Before the first request is served, so no request sees an old schema.
+        migrate(engine)
+        app.state.engine = engine
+        try:
+            yield
+        finally:
+            engine.dispose()
+
+    app = FastAPI(lifespan=lifespan)
     app.include_router(api)
     app.include_router(protected)
 
@@ -57,4 +78,4 @@ def create_app(static_dir: Path | None) -> FastAPI:
     return app
 
 
-app = create_app(default_static_dir())
+app = create_app(default_static_dir(), get_settings().database_path)

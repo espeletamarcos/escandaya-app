@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
@@ -27,7 +27,7 @@ def make_settings(
         openai_api_key=openai_api_key,
         transcription_model=DEFAULT_TRANSCRIPTION_MODEL,
         structuring_model=DEFAULT_STRUCTURING_MODEL,
-        # Not used until the database is wired into the app; then each test gets its own.
+        # Not read in tests: the app's database comes from `create_app` (see make_client).
         database_path=DEFAULT_DATABASE_PATH,
     )
 
@@ -76,8 +76,15 @@ class FakeStructurer:
 
 
 @pytest.fixture
-def make_client() -> ClientFactory:
-    """Build a test client with the given tokens and, optionally, fake providers."""
+def make_client(tmp_path_factory: pytest.TempPathFactory) -> Iterator[ClientFactory]:
+    """Build a test client with the given tokens and, optionally, fake providers.
+
+    Each client's app is started, as in production: it gets its own new database,
+    created by the migrations, and is stopped when the test ends. The databases go
+    in their own folder, never in a `tmp_path` a test may serve as the frontend.
+    """
+    databases = tmp_path_factory.mktemp("databases")
+    started: list[TestClient] = []
 
     def factory(
         tokens: tuple[str, ...] = (),
@@ -85,12 +92,18 @@ def make_client() -> ClientFactory:
         transcriber: FakeTranscriber | None = None,
         structurer: FakeStructurer | None = None,
     ) -> TestClient:
-        app = create_app(static_dir=static_dir)
+        database_path = databases / f"app-{len(started)}.db"
+        app = create_app(static_dir=static_dir, database_path=database_path)
         app.dependency_overrides[get_settings] = lambda: make_settings(tokens)
         if transcriber is not None:
             app.dependency_overrides[get_transcriber] = lambda: transcriber
         if structurer is not None:
             app.dependency_overrides[get_structurer] = lambda: structurer
-        return TestClient(app)
+        client = TestClient(app)
+        client.__enter__()  # Runs the startup: opens and migrates the database.
+        started.append(client)
+        return client
 
-    return factory
+    yield factory
+    for client in started:
+        client.__exit__(None, None, None)
