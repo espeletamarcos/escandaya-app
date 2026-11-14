@@ -10,6 +10,8 @@ from pathlib import Path
 from sqlite3 import Connection as SQLiteConnection
 from typing import Any
 
+from alembic import command
+from alembic.config import Config
 from fastapi import Request
 from sqlalchemy import (
     DateTime,
@@ -27,10 +29,12 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, rela
 
 from backend.sheets import Unit
 
+MIGRATIONS_DIR = Path(__file__).parent / "migrations"
+
 # Fixed constraint names, so later migrations can find and change them on SQLite.
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
-    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "uq": "uq_%(table_name)s_%(column_0_N_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
@@ -124,6 +128,15 @@ def make_engine(path: Path) -> Engine:
         cursor.close()
 
     return engine
+
+
+def migrate(engine: Engine) -> None:
+    """Bring the database up to date with the migrations. Does nothing if it already is."""
+    config = Config()
+    config.set_main_option("script_location", str(MIGRATIONS_DIR))
+    with engine.begin() as connection:
+        config.attributes["connection"] = connection
+        command.upgrade(config, "head")
 
 
 def get_session(request: Request) -> Iterator[Session]:

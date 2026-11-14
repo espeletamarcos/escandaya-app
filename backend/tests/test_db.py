@@ -3,9 +3,11 @@ from pathlib import Path
 from typing import Annotated
 
 import pytest
+from alembic.autogenerate import compare_metadata
+from alembic.migration import MigrationContext
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, select, text
+from sqlalchemy import Engine, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -15,6 +17,7 @@ from backend.db import (
     PreparationIngredient,
     get_session,
     make_engine,
+    migrate,
 )
 
 TRANSCRIPT = "Hago dos kilos de tartar de atún rojo para cuarenta raciones"
@@ -22,9 +25,9 @@ TRANSCRIPT = "Hago dos kilos de tartar de atún rojo para cuarenta raciones"
 
 @pytest.fixture
 def engine(tmp_path: Path) -> Engine:
-    # Until the migrations exist (next task), the tables come straight from the models.
+    # The tables come from the migrations, as in production.
     engine = make_engine(tmp_path / "test.db")
-    Base.metadata.create_all(engine)
+    migrate(engine)
     return engine
 
 
@@ -172,3 +175,38 @@ def test_get_session_uses_the_engine_of_the_app(engine: Engine) -> None:
         return len(session.scalars(select(Preparation)).all())
 
     assert TestClient(app).get("/count").json() == 1
+
+
+def test_migrate_creates_the_tables(tmp_path: Path) -> None:
+    engine = make_engine(tmp_path / "new.db")
+
+    migrate(engine)
+
+    tables = set(inspect(engine).get_table_names())
+    assert {"preparations", "preparation_ingredients", "alembic_version"} <= tables
+
+
+def test_migrating_twice_keeps_the_saved_data(tmp_path: Path) -> None:
+    path = tmp_path / "app.db"
+    first = make_engine(path)
+    migrate(first)
+    with Session(first) as session:
+        session.add(make_preparation())
+        session.commit()
+    first.dispose()
+
+    # A second start, as after a deploy or an idle stop.
+    second = make_engine(path)
+    migrate(second)
+
+    with Session(second) as session:
+        names = session.scalars(select(Preparation.name)).all()
+    assert names == ["Tartar de atún"]
+
+
+def test_the_migrations_match_the_models(engine: Engine) -> None:
+    # Fails when a model changes without a migration (or the other way round).
+    with engine.connect() as connection:
+        differences = compare_metadata(MigrationContext.configure(connection), Base.metadata)
+
+    assert differences == []
