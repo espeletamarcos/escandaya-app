@@ -2,7 +2,7 @@
 
 ## Backend
 - [x] Add `sqlalchemy` and `alembic` with `uv add`. Write tests, then add `DATABASE_PATH` to `settings.py` (default `backend/data/escandaya.db`) and to `conftest.make_settings`, and add `backend/data/` to `.gitignore` (05-C5)
-- [ ] Add `db.py`:
+- [x] Add `db.py`:
   - `make_engine(path)`: creates the folder, `hide_parameters=True`, foreign keys on, `check_same_thread=False`.
   - The `preparations` and `preparation_ingredients` tables as SQLAlchemy 2.0 typed models.
   - `get_session` as a FastAPI dependency reading the engine from `app.state`.
