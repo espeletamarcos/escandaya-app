@@ -12,7 +12,7 @@ A lightweight PWA frontend and a Python backend that holds all the logic. Pieces
 | Packages | uv (backend), npm (frontend) | Isolated environments and pinned versions with `uv.lock` and `package-lock.json` | In the skeleton |
 | Quality | pytest, ruff, ESLint | Tests and linters locally and in CI | In the skeleton |
 | CI | GitHub Actions | Runs lint, tests and build on every push | In the skeleton |
-| Database | SQLite with SQLAlchemy | One restaurant; can move to Postgres | Spec 05 |
+| Database | SQLite with SQLAlchemy, migrations with Alembic, on a 1 GB Fly volume (`escandaya_data` at `/data`) | One restaurant, one machine; a file copy is the backup; can move to Postgres | Spec 05 |
 | Speech to text | OpenAI transcription API | Good accuracy with kitchen noise | Spec 03 |
 | Structuring | OpenAI `gpt-5-mini` with structured output (strict JSON schema) | Same key and bill as transcription; about 11 s and 700 input / 550-750 output tokens per sheet on the first real notes | Spec 04 |
 | Hosting | Fly.io, Railway or Render | Automatic HTTPS, required for the microphone | Spec 02 |

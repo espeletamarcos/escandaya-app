@@ -30,8 +30,8 @@
 - [x] Write tests, then add the views to `App`: "Nueva ficha" and "Preparaciones" buttons ("Grabar" is already the record button), `RecordScreen` kept mounted while the list is open, opening and leaving a preparation, and after a save, a new `RecordScreen` and the list with "Ficha guardada" (05-C1, 05-C4)
 
 ## Fly, backups and checks
-- [ ] With your go-ahead, create the volume (`fly volumes create escandaya_data --region cdg --size 1`). Add `[mounts]` and `DATABASE_PATH` to `fly.toml`, and the 401 check for `GET /api/preparations` to `scripts/smoke.sh`. Deploy, recreating the machine if the mount cannot be added to the current one (05-C6)
-- [ ] Update the README (where the database lives, the backup steps, the snapshot retention from `fly volumes show` and how to change it) and the Database row in `docs/product/stack.md` (05-C8)
+- [x] With your go-ahead, create the volume (`fly volumes create escandaya_data --region cdg --size 1`). Add `[mounts]` and `DATABASE_PATH` to `fly.toml`, and the 401 check for `GET /api/preparations` to `scripts/smoke.sh`. Deploy, recreating the machine if the mount cannot be added to the current one (05-C6)
+- [x] Update the README (where the database lives, the backup steps, the snapshot retention from `fly volumes show` and how to change it) and the Database row in `docs/product/stack.md` (05-C8)
 - [ ] Manual checks on the iPhone, recorded here with the date:
   - Confirm a real sheet, see it in the list and open it.
   - It is still there after a deploy, and after the machine stops when idle.
