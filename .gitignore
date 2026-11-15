@@ -3,3 +3,13 @@ __pycache__/
 *.pyc
 .env
 backend/data/
+
+# Claude Code: personal settings stay local
+.claude/settings.local.json
+
+# Impeccable: the downloaded engine and its runtime state stay local
+.claude/skills/impeccable/scripts/bin/
+**/.impeccable/hook.cache.json
+.impeccable/live/
+.impeccable/history/
+.impeccable/config.local.json
