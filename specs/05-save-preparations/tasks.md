@@ -32,7 +32,7 @@
 ## Fly, backups and checks
 - [x] With your go-ahead, create the volume (`fly volumes create escandaya_data --region cdg --size 1`). Add `[mounts]` and `DATABASE_PATH` to `fly.toml`, and the 401 check for `GET /api/preparations` to `scripts/smoke.sh`. Deploy, recreating the machine if the mount cannot be added to the current one (05-C6)
 - [x] Update the README (where the database lives, the backup steps, the snapshot retention from `fly volumes show` and how to change it) and the Database row in `docs/product/stack.md` (05-C8)
-- [ ] Manual checks on the iPhone, recorded here with the date:
+- [x] Manual checks on the iPhone, recorded here with the date:
   - Confirm a real sheet, see it in the list and open it.
   - It is still there after a deploy, and after the machine stops when idle.
   - The logs show only `preparations` lines with status and duration.
@@ -44,6 +44,7 @@
   - 2026-11-15: `fly logs` (the last 100 lines, from 10:30 UTC, so list and detail requests only) has only `preparations action=... status=... duration_ms=...` lines and access lines with paths. None of the sheet's name, ingredient names or longer transcript words appear. The line after a confirm is covered by the `caplog` tests.
   - 2026-11-15: backup made with `python -m backend.backup /data/backup.db` and downloaded with `fly ssh sftp get`. The copy (32 KB) passes `pragma integrity_check` and has 1 preparation and 2 ingredients.
   - 2026-11-15: `scripts/smoke.sh` passes on the live URL, including 401 for `GET /api/preparations`.
-  - Pending: still there after a deploy. The sheet was saved after v17 went live; the deploy of this commit is the check.
-- [ ] Update the status of spec 05 in `specs/README.md` as it moves to `in progress` and `implemented`
+  - 2026-11-15: still there after a deploy. CI deployed the commit recording these checks as release v18; afterwards the live database still had 1 preparation and 2 ingredients, and `scripts/smoke.sh` passed.
+- [x] Update the status of spec 05 in `specs/README.md` as it moves to `in progress` and `implemented`
   - 2026-11-15: `in progress` (all code deployed; the check after a deploy pending above).
+  - 2026-11-15: `implemented`.
