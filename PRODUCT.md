@@ -52,7 +52,7 @@ Constraints:
 
 - Name: Escandaya. Manifest description: "Escandallos por voz con coste por ración".
 - Voice: Spanish from Spain, addressing the user as tú ("Inténtalo de nuevo").
-- Stated by the owner (2026-11-15): light theme only; the feel is minimalist, with details that show care. The current look (the Vite starter template) is rejected; it reads as a template.
+- Stated by the owner (2026-11-15): light theme only; the feel is minimalist, with details that show care; light green is the primary colour. The current look (the Vite starter template) is rejected; it reads as a template.
 - The current icons in `frontend/public/` are not confirmed as brand assets.
 
 ## Evidence on Hand
