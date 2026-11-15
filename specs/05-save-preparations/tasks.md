@@ -39,4 +39,11 @@
   - A backup copied off the volume opens locally.
 
   (05-C6, 05-C7, 05-C8)
+  - 2026-11-15, iPhone: a real sheet confirmed on release v17 (spec 05 deployed by CI after merging PR #5). The phone listed the preparations and opened preparation 1 (`preparations action=list status=200`, `action=detail status=200`).
+  - 2026-11-15: still there after the machine stopped when idle (stops at 10:30 and 10:37 UTC). Counted on the live database afterwards: 1 preparation, 2 ingredients. Each stop logs `error umounting /data: EBUSY ... retrying in a bit`; the next boot shows the volume `clean` and the data intact.
+  - 2026-11-15: `fly logs` (the last 100 lines, from 10:30 UTC, so list and detail requests only) has only `preparations action=... status=... duration_ms=...` lines and access lines with paths. None of the sheet's name, ingredient names or longer transcript words appear. The line after a confirm is covered by the `caplog` tests.
+  - 2026-11-15: backup made with `python -m backend.backup /data/backup.db` and downloaded with `fly ssh sftp get`. The copy (32 KB) passes `pragma integrity_check` and has 1 preparation and 2 ingredients.
+  - 2026-11-15: `scripts/smoke.sh` passes on the live URL, including 401 for `GET /api/preparations`.
+  - Pending: still there after a deploy. The sheet was saved after v17 went live; the deploy of this commit is the check.
 - [ ] Update the status of spec 05 in `specs/README.md` as it moves to `in progress` and `implemented`
+  - 2026-11-15: `in progress` (all code deployed; the check after a deploy pending above).
