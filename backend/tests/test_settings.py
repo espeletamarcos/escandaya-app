@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from backend.settings import (
+    DEFAULT_DATABASE_PATH,
     DEFAULT_STRUCTURING_MODEL,
     DEFAULT_TRANSCRIPTION_MODEL,
     load_settings,
@@ -12,6 +15,7 @@ def test_empty_environment_uses_safe_defaults() -> None:
     assert settings.openai_api_key is None
     assert settings.transcription_model == DEFAULT_TRANSCRIPTION_MODEL == "gpt-4o-mini-transcribe"
     assert settings.structuring_model == DEFAULT_STRUCTURING_MODEL == "gpt-5-mini"
+    assert settings.database_path == DEFAULT_DATABASE_PATH
 
 
 def test_access_tokens_are_split_and_trimmed() -> None:
@@ -66,3 +70,21 @@ def test_blank_structuring_model_uses_default() -> None:
     settings = load_settings({"STRUCTURING_MODEL": " "})
 
     assert settings.structuring_model == DEFAULT_STRUCTURING_MODEL
+
+
+def test_default_database_path_is_backend_data_folder() -> None:
+    backend_dir = Path(__file__).parents[1]
+
+    assert DEFAULT_DATABASE_PATH == backend_dir / "data" / "escandaya.db"
+
+
+def test_database_path_can_be_overridden() -> None:
+    settings = load_settings({"DATABASE_PATH": " /data/escandaya.db "})
+
+    assert settings.database_path == Path("/data/escandaya.db")
+
+
+def test_blank_database_path_uses_default() -> None:
+    settings = load_settings({"DATABASE_PATH": " "})
+
+    assert settings.database_path == DEFAULT_DATABASE_PATH

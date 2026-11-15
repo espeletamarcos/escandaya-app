@@ -128,3 +128,34 @@ export function emptyFields(sheet: EditableSheet): string[] {
   });
   return empty;
 }
+
+/**
+ * The edited form as a sheet to confirm. Names are trimmed; numbers that do not
+ * parse and empty units become null, so the backend counts them as missing data.
+ * The client-side ingredient ids are dropped.
+ */
+export function toSheet(sheet: EditableSheet): Sheet {
+  return {
+    name: sheet.name.trim(),
+    yield: {
+      quantity: parseQuantity(sheet.yield.quantity),
+      unit: sheet.yield.unit || null,
+      estimated: sheet.yield.estimated,
+    },
+    covers: { value: parseCovers(sheet.covers.value), estimated: sheet.covers.estimated },
+    ingredients: sheet.ingredients.map((item) => ({
+      name: item.name.trim(),
+      quantity: parseQuantity(item.quantity),
+      unit: item.unit || null,
+      estimated: item.estimated,
+    })),
+  };
+}
+
+/**
+ * Whether the sheet can be confirmed. Empty names block it, because the backend
+ * rejects them. Empty quantities, units, yield and covers do not: they are missing data.
+ */
+export function canConfirm(sheet: EditableSheet): boolean {
+  return sheet.name.trim() !== "" && sheet.ingredients.every((item) => item.name.trim() !== "");
+}

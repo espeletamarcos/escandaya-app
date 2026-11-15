@@ -1,13 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearToken, getToken, setToken } from "../auth/token";
+import type { PreparationSummary, SavedPreparation } from "../preparations/types";
 import type { Draft, Sheet } from "../sheet/types";
 import {
   ApiError,
   type ApiErrorKind,
   checkSession,
+  confirmPreparation,
   createDraft,
   DRAFT_TIMEOUT_MS,
+  getPreparation,
+  listPreparations,
   onUnauthorized,
+  PREPARATIONS_TIMEOUT_MS,
   SESSION_TIMEOUT_MS,
   transcribe,
   TRANSCRIBE_TIMEOUT_MS,
@@ -338,7 +343,7 @@ describe("createDraft (04-C1, 04-C3, 04-C7)", () => {
 
   it.each<[number, ApiErrorKind]>([
     [401, "unauthorized"],
-    [422, "failed"],
+    [422, "invalid"],
     [502, "failed"],
     [503, "failed"],
     [500, "failed"],
@@ -412,5 +417,191 @@ describe("createDraft (04-C1, 04-C3, 04-C7)", () => {
     expect(DRAFT_TIMEOUT_MS).toBe(60_000);
     expect(lastRequest().init.signal?.aborted).toBe(true);
     expect(await result).toBe("timeout");
+  });
+});
+
+// --- Preparations (05-C1, 05-C4) ------------------------------------------------
+
+const CONFIRM_ID = "3f2b8c1e-5d4a-4c6b-9e7f-1a2b3c4d5e6f";
+
+const SAVED: SavedPreparation = {
+  id: 7,
+  confirmed_at: "2026-11-14T12:30:00Z",
+  sheet: TUNA_SHEET,
+  missing: ["ingredients.1.quantity", "ingredients.1.unit"],
+};
+
+const SUMMARY: PreparationSummary = {
+  id: 7,
+  name: "Tartar de atún",
+  covers: 30,
+  missing_count: 2,
+  confirmed_at: "2026-11-14T12:30:00Z",
+};
+
+const confirmTuna = () =>
+  confirmPreparation({ confirmId: CONFIRM_ID, transcript: "dos kilos de atún", sheet: TUNA_SHEET });
+
+/** Bodies that are not a saved preparation, for confirm and for detail. */
+const BAD_SAVED: [string, unknown][] = [
+  ["a list", [SAVED]],
+  ["no id", without(SAVED, "id")],
+  ["an id as a string", { ...SAVED, id: "7" }],
+  ["an id with decimals", { ...SAVED, id: 7.5 }],
+  ["no confirmed_at", without(SAVED, "confirmed_at")],
+  ["confirmed_at that is not a date", { ...SAVED, confirmed_at: "ayer" }],
+  ["no sheet", without(SAVED, "sheet")],
+  ["a sheet with an unknown unit", { ...SAVED, sheet: { ...TUNA_SHEET, yield: { ...TUNA_SHEET.yield, unit: "taza" } } }],
+  ["no missing", without(SAVED, "missing")],
+  ["missing with a number", { ...SAVED, missing: [1] }],
+];
+
+/** Shared by the three functions: everything except the happy path and the shape. */
+describe.each<[string, () => Promise<unknown>]>([
+  ["confirmPreparation", confirmTuna],
+  ["listPreparations", listPreparations],
+  ["getPreparation", () => getPreparation(7)],
+])("%s, on failure", (_, call) => {
+  it.each<[number, ApiErrorKind]>([
+    [401, "unauthorized"],
+    [404, "failed"],
+    [422, "invalid"],
+    [500, "failed"],
+    [503, "failed"],
+    [504, "timeout"],
+  ])("maps status %i to %s", async (status, kind) => {
+    respond(status, { detail: "whatever" });
+    expect(await errorKind(call())).toBe(kind);
+  });
+
+  it("fails with failed on a body that is not JSON", async () => {
+    fetchMock.mockResolvedValue(new Response("<html>oops</html>", { status: 200 }));
+    expect(await errorKind(call())).toBe("failed");
+  });
+
+  it("fails with network when fetch rejects", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    expect(await errorKind(call())).toBe("network");
+  });
+
+  it("fails with unauthorized without a stored token, without calling the backend", async () => {
+    clearToken();
+
+    expect(await errorKind(call())).toBe("unauthorized");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("aborts after 20s and fails with timeout", async () => {
+    vi.useFakeTimers();
+    hang();
+
+    const result = errorKind(call());
+    await vi.advanceTimersByTimeAsync(PREPARATIONS_TIMEOUT_MS - 1);
+    expect(lastRequest().init.signal?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(PREPARATIONS_TIMEOUT_MS).toBe(20_000);
+    expect(lastRequest().init.signal?.aborted).toBe(true);
+    expect(await result).toBe("timeout");
+  });
+});
+
+describe("confirmPreparation (05-C1)", () => {
+  it("posts the confirm id, the transcript and the sheet as JSON with the token", async () => {
+    respond(201, SAVED);
+
+    await confirmTuna();
+
+    const { url, init } = lastRequest();
+    expect(url).toBe("/api/preparations");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual({
+      confirm_id: CONFIRM_ID,
+      transcript: "dos kilos de atún",
+      sheet: TUNA_SHEET,
+    });
+    const headers = headersOf(init);
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(headers.get("Authorization")).toBe("Bearer chef-token");
+  });
+
+  it("never sends missing data: the backend computes it", async () => {
+    respond(201, SAVED);
+
+    await confirmTuna();
+
+    expect(JSON.parse(String(lastRequest().init.body))).not.toHaveProperty("missing");
+  });
+
+  it.each([201, 200])("returns the saved preparation on %i", async (status) => {
+    respond(status, SAVED);
+    await expect(confirmTuna()).resolves.toEqual(SAVED);
+  });
+
+  it.each(BAD_SAVED)("fails with failed on %s", async (_, body) => {
+    respond(201, body);
+    expect(await errorKind(confirmTuna())).toBe("failed");
+  });
+});
+
+describe("listPreparations (05-C4)", () => {
+  it("gets the list with the token", async () => {
+    respond(200, [SUMMARY]);
+
+    await listPreparations();
+
+    const { url, init } = lastRequest();
+    expect(url).toBe("/api/preparations");
+    expect(init.method).toBe("GET");
+    expect(headersOf(init).get("Authorization")).toBe("Bearer chef-token");
+  });
+
+  it("returns the summaries", async () => {
+    const noCovers = { ...SUMMARY, id: 8, covers: null, missing_count: 0 };
+    respond(200, [SUMMARY, noCovers]);
+
+    await expect(listPreparations()).resolves.toEqual([SUMMARY, noCovers]);
+  });
+
+  it("returns an empty list", async () => {
+    respond(200, []);
+    await expect(listPreparations()).resolves.toEqual([]);
+  });
+
+  it.each<[string, unknown]>([
+    ["an object instead of a list", SUMMARY],
+    ["a summary without a name", [without(SUMMARY, "name")]],
+    ["covers as a string", [{ ...SUMMARY, covers: "30" }]],
+    ["a missing count with decimals", [{ ...SUMMARY, missing_count: 1.5 }]],
+    ["a negative missing count", [{ ...SUMMARY, missing_count: -1 }]],
+    ["confirmed_at that is not a date", [{ ...SUMMARY, confirmed_at: "" }]],
+    ["an id as a string", [{ ...SUMMARY, id: "7" }]],
+    ["a null item", [null]],
+  ])("fails with failed on %s", async (_, body) => {
+    respond(200, body);
+    expect(await errorKind(listPreparations())).toBe("failed");
+  });
+});
+
+describe("getPreparation (05-C4)", () => {
+  it("gets one preparation by id with the token", async () => {
+    respond(200, SAVED);
+
+    await getPreparation(7);
+
+    const { url, init } = lastRequest();
+    expect(url).toBe("/api/preparations/7");
+    expect(init.method).toBe("GET");
+    expect(headersOf(init).get("Authorization")).toBe("Bearer chef-token");
+  });
+
+  it("returns the saved preparation", async () => {
+    respond(200, SAVED);
+    await expect(getPreparation(7)).resolves.toEqual(SAVED);
+  });
+
+  it.each(BAD_SAVED)("fails with failed on %s", async (_, body) => {
+    respond(200, body);
+    expect(await errorKind(getPreparation(7))).toBe("failed");
   });
 });

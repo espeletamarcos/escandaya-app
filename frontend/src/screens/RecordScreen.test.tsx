@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeRecorder } from "../recorder/FakeRecorder";
 import { RecorderError } from "../recorder/Recorder";
 import { MAX_RECORDING_MS } from "../recorder/useRecorder";
+import type { SavedPreparation } from "../preparations/types";
+import type { ConfirmFn } from "../preparations/useConfirm";
 import type { Draft, Sheet } from "../sheet/types";
 import type { CreateDraftFn, TranscribeFn } from "../sheet/useVoiceSheet";
 import RecordScreen from "./RecordScreen";
@@ -88,15 +90,27 @@ describe("RecordScreen", () => {
     const transcribeOk = (text = TRANSCRIPT) => vi.fn<TranscribeFn>(async () => text);
     const draftOk = (draft: Draft = DRAFT) => vi.fn<CreateDraftFn>(async () => draft);
 
+    const SAVED: SavedPreparation = {
+      id: 7,
+      confirmed_at: "2026-11-14T12:30:00Z",
+      sheet: SHEET,
+      missing: DRAFT.missing,
+    };
+    const confirmOk = () => vi.fn<ConfirmFn>(async () => SAVED);
+
     function renderScreen(
       transcribe: TranscribeFn = transcribeOk(),
       createDraft: CreateDraftFn = draftOk(),
+      confirmPreparation: ConfirmFn = confirmOk(),
+      onSaved: (saved: SavedPreparation) => void = vi.fn(),
     ) {
       render(
         <RecordScreen
           recorder={new FakeRecorder()}
           transcribe={transcribe}
           createDraft={createDraft}
+          confirmPreparation={confirmPreparation}
+          onSaved={onSaved}
         />,
       );
     }
@@ -289,6 +303,74 @@ describe("RecordScreen", () => {
 
       expect(transcribe).toHaveBeenCalledTimes(2);
       expect(sheetName().value).toBe("Fondo oscuro");
+    });
+
+    describe("Confirmar (05-C1)", () => {
+      const confirmButton = () => screen.getByRole("button", { name: /Confirmar|Guardando…/ });
+
+      async function showSheet() {
+        await record();
+        fireEvent.click(button());
+        await screen.findByRole("form", { name: "Ficha" });
+      }
+
+      it("sends the edited sheet and the transcript, and passes the saved copy on", async () => {
+        const confirm = deferred<Parameters<ConfirmFn>[0], SavedPreparation>();
+        const onSaved = vi.fn();
+        renderScreen(transcribeOk(), draftOk(), confirm.fn, onSaved);
+        await showSheet();
+        fireEvent.change(sheetName(), { target: { value: "Tartar editado" } });
+
+        fireEvent.click(confirmButton());
+
+        expect(confirm.fn).toHaveBeenCalledOnce();
+        const input = confirm.fn.mock.calls[0][0];
+        expect(input.transcript).toBe(TRANSCRIPT);
+        expect(input.sheet).toEqual({ ...SHEET, name: "Tartar editado" });
+        expect(confirmButton().textContent).toBe("Guardando…");
+        expect(confirmButton().hasAttribute("disabled")).toBe(true);
+
+        await act(async () => confirm.calls[0].resolve(SAVED));
+        expect(onSaved).toHaveBeenCalledExactlyOnceWith(SAVED);
+      });
+
+      it("keeps the sheet and its edits after an error, and retries with the same id", async () => {
+        const confirm = vi
+          .fn<ConfirmFn>()
+          .mockRejectedValueOnce(new ApiError("network"))
+          .mockResolvedValueOnce(SAVED);
+        const onSaved = vi.fn();
+        renderScreen(transcribeOk(), draftOk(), confirm, onSaved);
+        await showSheet();
+        fireEvent.change(sheetName(), { target: { value: "Tartar editado" } });
+
+        fireEvent.click(confirmButton());
+        expect((await screen.findByRole("alert")).textContent).toContain("No hay conexión");
+        expect(sheetName().value).toBe("Tartar editado");
+        expect(onSaved).not.toHaveBeenCalled();
+
+        fireEvent.click(confirmButton());
+        await act(async () => {});
+
+        expect(confirm).toHaveBeenCalledTimes(2);
+        expect(confirm.mock.calls[1][0].confirmId).toBe(confirm.mock.calls[0][0].confirmId);
+        expect(onSaved).toHaveBeenCalledOnce();
+      });
+
+      it("gives the sheet of a new recording a new confirm id", async () => {
+        const confirm = vi.fn<ConfirmFn>().mockRejectedValue(new ApiError("failed"));
+        renderScreen(transcribeOk(), draftOk(), confirm);
+        await showSheet();
+        fireEvent.click(confirmButton());
+        await screen.findByRole("alert");
+
+        await showSheet();
+        fireEvent.click(confirmButton());
+        await act(async () => {});
+
+        expect(confirm).toHaveBeenCalledTimes(2);
+        expect(confirm.mock.calls[1][0].confirmId).not.toBe(confirm.mock.calls[0][0].confirmId);
+      });
     });
 
     it("ignores the sheet of the old recording if it arrives late", async () => {

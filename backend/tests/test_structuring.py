@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
-from backend.settings import Settings
+from backend.settings import DEFAULT_DATABASE_PATH, Settings
 from backend.sheets import Unit
 from backend.structuring import (
     MAX_OUTPUT_TOKENS,
@@ -41,6 +41,7 @@ def test_get_structurer_uses_the_key_and_the_configured_model() -> None:
         openai_api_key="sk-test",
         transcription_model="any-transcription-model",
         structuring_model="some-structuring-model",
+        database_path=DEFAULT_DATABASE_PATH,
     )
 
     structurer = get_structurer(settings)

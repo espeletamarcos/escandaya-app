@@ -1,11 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { checkSession, onUnauthorized } from "./api/client";
+import {
+  checkSession,
+  confirmPreparation,
+  createDraft,
+  getPreparation,
+  listPreparations,
+  onUnauthorized,
+  transcribe,
+} from "./api/client";
 import { setToken } from "./auth/token";
+import type { PreparationSummary, SavedPreparation } from "./preparations/types";
+import type { ConfirmFn } from "./preparations/useConfirm";
 import { BrowserRecorder } from "./recorder/BrowserRecorder";
 import type { Recorder } from "./recorder/Recorder";
 import AccessScreen from "./screens/AccessScreen";
+import PreparationScreen from "./screens/PreparationScreen";
+import PreparationsScreen from "./screens/PreparationsScreen";
 import RecordScreen from "./screens/RecordScreen";
 import { CheckingScreen, UnavailableScreen } from "./screens/SessionStatus";
+import type { CreateDraftFn, TranscribeFn } from "./sheet/useVoiceSheet";
+import "./App.css";
 
 /** The part of the API client the gate uses; tests pass a fake. */
 export interface SessionClient {
@@ -13,8 +27,99 @@ export interface SessionClient {
   onUnauthorized: (listener: () => void) => () => void;
 }
 
+/** The calls the unlocked screens make; tests pass fakes. */
+export interface AppApi {
+  transcribe: TranscribeFn;
+  createDraft: CreateDraftFn;
+  confirmPreparation: ConfirmFn;
+  listPreparations: () => Promise<PreparationSummary[]>;
+  getPreparation: (id: number) => Promise<SavedPreparation>;
+}
+
 const defaultSession: SessionClient = { checkSession, onUnauthorized };
 const defaultRecorder = new BrowserRecorder();
+const defaultApi: AppApi = {
+  transcribe,
+  createDraft,
+  confirmPreparation,
+  listPreparations,
+  getPreparation,
+};
+
+type View = { kind: "record" } | { kind: "list" } | { kind: "detail"; id: number };
+
+/**
+ * The app once the token is accepted: the record screen, the list and one
+ * preparation. No URL routing: three views, switched by two buttons. The bottom
+ * navigation comes with the styling spec.
+ */
+function Unlocked({ recorder, api }: { recorder: Recorder; api: AppApi }) {
+  const [view, setView] = useState<View>({ kind: "record" });
+  const [notice, setNotice] = useState<string | null>(null);
+  // Bumped after a save: a new RecordScreen starts clean (no recording, no sheet).
+  const [recordKey, setRecordKey] = useState(0);
+
+  const go = (next: View) => {
+    setNotice(null);
+    setView(next);
+  };
+
+  const onSaved = useCallback(() => {
+    setRecordKey((key) => key + 1);
+    setNotice("Ficha guardada");
+    setView({ kind: "list" });
+  }, []);
+
+  const onRecord = view.kind === "record";
+
+  return (
+    <>
+      <nav className="app-nav" aria-label="Secciones">
+        <button
+          type="button"
+          aria-current={onRecord ? "page" : undefined}
+          onClick={() => go({ kind: "record" })}
+        >
+          Nueva ficha
+        </button>
+        <button
+          type="button"
+          aria-current={onRecord ? undefined : "page"}
+          onClick={() => go({ kind: "list" })}
+        >
+          Preparaciones
+        </button>
+      </nav>
+
+      {/* Hidden, not removed, so an unconfirmed sheet survives a look at the list. */}
+      <div hidden={!onRecord}>
+        <RecordScreen
+          key={recordKey}
+          recorder={recorder}
+          transcribe={api.transcribe}
+          createDraft={api.createDraft}
+          confirmPreparation={api.confirmPreparation}
+          onSaved={onSaved}
+        />
+      </div>
+      {view.kind === "list" && (
+        <PreparationsScreen
+          listPreparations={api.listPreparations}
+          notice={notice}
+          onOpen={(id) => go({ kind: "detail", id })}
+        />
+      )}
+      {view.kind === "detail" && (
+        <PreparationScreen
+          key={view.id}
+          id={view.id}
+          getPreparation={api.getPreparation}
+          onBack={() => go({ kind: "list" })}
+        />
+      )}
+    </>
+  );
+}
 
 type Gate =
   | { kind: "checking" }
@@ -29,9 +134,10 @@ function locked({ rejected = false, checking = false } = {}): Gate {
 interface AppProps {
   session?: SessionClient;
   recorder?: Recorder;
+  api?: AppApi;
 }
 
-function App({ session = defaultSession, recorder = defaultRecorder }: AppProps) {
+function App({ session = defaultSession, recorder = defaultRecorder, api = defaultApi }: AppProps) {
   const [gate, setGate] = useState<Gate>({ kind: "checking" });
   // Only the latest check may decide; StrictMode runs the first one twice in development.
   const latestCheck = useRef(0);
@@ -81,7 +187,7 @@ function App({ session = defaultSession, recorder = defaultRecorder }: AppProps)
         <AccessScreen onToken={handleToken} rejected={gate.rejected} checking={gate.checking} />
       );
     case "unlocked":
-      return <RecordScreen recorder={recorder} />;
+      return <Unlocked recorder={recorder} api={api} />;
   }
 }
 

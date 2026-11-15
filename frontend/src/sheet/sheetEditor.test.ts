@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  canConfirm,
   type EditableSheet,
   editSheet,
   emptyFields,
   parseCovers,
   parseQuantity,
   toEditable,
+  toSheet,
 } from "./sheetEditor";
 import type { Sheet } from "./types";
 
@@ -303,5 +305,136 @@ describe("emptyFields (04-C5, 04-C6)", () => {
     const sheet = toEditable(SHEET);
     expect(sheet.yield.estimated).toBe(true);
     expect(emptyFields(sheet)).not.toContain("yield.quantity");
+  });
+});
+
+describe("toSheet (05-C1)", () => {
+  it("gives back the same sheet when nothing was edited", () => {
+    expect(toSheet(toEditable(SHEET))).toEqual(SHEET);
+  });
+
+  it("reads the edited values, with a decimal comma", () => {
+    let sheet = toEditable(SHEET);
+    const id = sheet.ingredients[1].id;
+    sheet = editSheet(sheet, { type: "yield", changes: { quantity: "3,5", unit: "l" } });
+    sheet = editSheet(sheet, { type: "covers", changes: { value: "45", estimated: true } });
+    sheet = editSheet(sheet, {
+      type: "ingredient",
+      id,
+      changes: { name: "cebollino", quantity: "20", unit: "g", estimated: true },
+    });
+
+    const result = toSheet(sheet);
+
+    expect(result.yield).toEqual({ quantity: 3.5, unit: "l", estimated: true });
+    expect(result.covers).toEqual({ value: 45, estimated: true });
+    expect(result.ingredients[1]).toEqual({
+      name: "cebollino",
+      quantity: 20,
+      unit: "g",
+      estimated: true,
+    });
+  });
+
+  it("trims the names", () => {
+    let sheet = toEditable(SHEET);
+    const id = sheet.ingredients[0].id;
+    sheet = editSheet(sheet, { type: "name", value: "  Tartar  " });
+    sheet = editSheet(sheet, { type: "ingredient", id, changes: { name: " atún " } });
+
+    const result = toSheet(sheet);
+
+    expect(result.name).toBe("Tartar");
+    expect(result.ingredients[0].name).toBe("atún");
+  });
+
+  it("sends empty fields as null: they are missing data", () => {
+    let sheet = toEditable(SHEET);
+    sheet = editSheet(sheet, { type: "yield", changes: { quantity: "", unit: "" } });
+    sheet = editSheet(sheet, { type: "covers", changes: { value: "" } });
+
+    const result = toSheet(sheet);
+
+    expect(result.yield).toEqual({ quantity: null, unit: null, estimated: true });
+    expect(result.covers).toEqual({ value: null, estimated: false });
+  });
+
+  it.each(["dos", "0", "-1", "1e3", "2,5,0"])(
+    "sends a quantity that does not parse (%s) as null",
+    (text) => {
+      const sheet = editSheet(toEditable(SHEET), { type: "yield", changes: { quantity: text } });
+      expect(toSheet(sheet).yield.quantity).toBeNull();
+    },
+  );
+
+  it.each(["treinta", "0", "30,5", "-3"])("sends covers that do not parse (%s) as null", (text) => {
+    const sheet = editSheet(toEditable(SHEET), { type: "covers", changes: { value: text } });
+    expect(toSheet(sheet).covers.value).toBeNull();
+  });
+
+  it("keeps the order after adding and deleting ingredients", () => {
+    let sheet = toEditable(SHEET);
+    sheet = editSheet(sheet, { type: "delete-ingredient", id: sheet.ingredients[0].id });
+    sheet = editSheet(sheet, { type: "add-ingredient" });
+    const added = sheet.ingredients[2].id;
+    sheet = editSheet(sheet, { type: "ingredient", id: added, changes: { name: "sal" } });
+
+    expect(toSheet(sheet).ingredients.map((item) => item.name)).toEqual([
+      "un puñado de cebollino",
+      "aceite",
+      "sal",
+    ]);
+  });
+
+  it("does not send the client-side ids", () => {
+    const [first] = toSheet(toEditable(SHEET)).ingredients;
+    expect(Object.keys(first).sort()).toEqual(["estimated", "name", "quantity", "unit"]);
+    expect(Object.keys(toSheet(toEditable(SHEET))).sort()).toEqual([
+      "covers",
+      "ingredients",
+      "name",
+      "yield",
+    ]);
+  });
+});
+
+describe("canConfirm (05-C1)", () => {
+  it("allows a complete sheet", () => {
+    expect(canConfirm(toEditable(SHEET))).toBe(true);
+  });
+
+  it("allows a sheet with missing quantities, units, yield and covers", () => {
+    const sheet = toEditable({
+      name: "Fondo",
+      yield: { quantity: null, unit: null, estimated: false },
+      covers: { value: null, estimated: false },
+      ingredients: [{ name: "agua", quantity: null, unit: null, estimated: false }],
+    });
+
+    expect(canConfirm(sheet)).toBe(true);
+  });
+
+  it("allows a sheet without ingredients", () => {
+    expect(canConfirm(toEditable({ ...SHEET, ingredients: [] }))).toBe(true);
+  });
+
+  it.each(["", "   "])("blocks a sheet whose name is %j", (name) => {
+    expect(canConfirm(editSheet(toEditable(SHEET), { type: "name", value: name }))).toBe(false);
+  });
+
+  it("blocks a sheet with an ingredient without a name, such as a row just added", () => {
+    const sheet = editSheet(toEditable(SHEET), { type: "add-ingredient" });
+    expect(canConfirm(sheet)).toBe(false);
+  });
+
+  it("allows it again once the empty row is named or deleted", () => {
+    const sheet = editSheet(toEditable(SHEET), { type: "add-ingredient" });
+    const added = sheet.ingredients[3].id;
+
+    const named = editSheet(sheet, { type: "ingredient", id: added, changes: { name: "sal" } });
+    const deleted = editSheet(sheet, { type: "delete-ingredient", id: added });
+
+    expect(canConfirm(named)).toBe(true);
+    expect(canConfirm(deleted)).toBe(true);
   });
 });

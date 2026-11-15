@@ -32,9 +32,41 @@ To deploy by hand:
     curl -L https://fly.io/install.sh | sh   # install flyctl once
     fly auth login
     fly deploy --ha=false                    # one machine
-    scripts/smoke.sh                         # checks /api/health, and that /api/session and POST /api/drafts need a token, on the live URL
+    scripts/smoke.sh                         # checks /api/health, and that /api/session, POST /api/drafts and GET /api/preparations need a token, on the live URL
 
 The machine stops when idle, so the first request after a pause is slow (a few seconds).
+
+## Data and backups
+
+Saved preparations live in one SQLite file. The tables are created and updated by the migrations in `backend/src/backend/migrations/`, which run every time the app starts.
+
+| Where | Database file |
+| --- | --- |
+| Fly | `/data/escandaya.db`, on the `escandaya_data` volume (1 GB, `cdg`) mounted at `/data` |
+| Locally | `backend/data/escandaya.db`, ignored by git |
+
+`DATABASE_PATH` sets the file; `fly.toml` points it at the volume. A volume belongs to one machine, so the app must stay on **one machine**: a second one would keep its own, separate database.
+
+### Copy the database to your computer
+
+The copy is made inside the machine with SQLite's backup API, so it is consistent even if someone saves a sheet meanwhile, then downloaded:
+
+    fly ssh console -C "python -m backend.backup /data/backup.db"
+    fly ssh sftp get /data/backup.db ~/escandaya-backup.db   # in your home folder, outside the repo
+
+The next copy replaces `/data/backup.db`. Keep the downloaded file outside the repo: it holds real recipes. To check that it opens:
+
+    python3 -c "import sqlite3; print(sqlite3.connect('$HOME/escandaya-backup.db').execute('select count(*) from preparations').fetchone())"
+
+### Volume snapshots
+
+Fly also snapshots the volume every day and keeps each snapshot for **5 days** (the default, read with `fly volumes show`). To see them, or keep them longer:
+
+    fly volumes list                                         # the volume id
+    fly volumes snapshots list <volume id>
+    fly volumes update <volume id> --snapshot-retention 30   # days
+
+A snapshot is a safety net against losing the disk; a copy on your computer is the backup you control.
 
 ## Access and secrets
 

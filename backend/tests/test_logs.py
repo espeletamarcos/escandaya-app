@@ -1,10 +1,12 @@
 import json
 import logging
+import re
 
 import pytest
 from conftest import ClientFactory, FakeStructurer, FakeTranscriber
 
 import backend.main  # noqa: F401  (installs the access-log filter, as uvicorn's import does)
+from backend import preparations
 from backend.structuring import StructuringError, StructuringTimeout
 from backend.transcription import (
     MAX_AUDIO_BYTES,
@@ -314,3 +316,104 @@ def test_rejected_text_is_not_logged(
     # Structuring never ran, so there is no structuring line.
     assert response.status_code == 422
     assert structuring_logs(caplog) == []
+
+
+# --- Preparations (05-C7) ---------------------------------------------------------
+
+CONFIRM_ID = "3f2b8c1e-5d4a-4c6b-9e7f-1a2b3c4d5e6f"
+PREPARATION_LOG = re.compile(r"^preparations action=(confirm|list|detail) status=\d{3} duration_ms=\d+$")
+
+
+def preparation_logs(caplog: pytest.LogCaptureFixture) -> list[str]:
+    return [r.getMessage() for r in caplog.records if r.name == "backend.preparations"]
+
+
+def post_preparation(client, **changes):
+    body = {"confirm_id": CONFIRM_ID, "transcript": DICTATION, "sheet": SHEET, **changes}
+    return client.post("/api/preparations", json=body, headers=AUTH)
+
+
+def test_confirm_logs_only_the_action_status_and_duration(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    client = make_client((TOKEN,))
+
+    with caplog.at_level(logging.INFO):
+        response = post_preparation(client)
+
+    assert response.status_code == 201
+    [message] = preparation_logs(caplog)
+    assert PREPARATION_LOG.match(message)
+    assert message.startswith("preparations action=confirm status=201 ")
+    assert_no_content_logged(caplog)
+    assert CONFIRM_ID not in caplog.text
+
+
+def test_a_repeated_confirm_is_logged_as_200(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    client = make_client((TOKEN,))
+    post_preparation(client)
+    caplog.clear()
+
+    with caplog.at_level(logging.INFO):
+        post_preparation(client)
+
+    [message] = preparation_logs(caplog)
+    assert message.startswith("preparations action=confirm status=200 ")
+
+
+def test_list_and_detail_log_only_the_action_status_and_duration(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    client = make_client((TOKEN,))
+    saved_id = post_preparation(client).json()["id"]
+    caplog.clear()
+
+    with caplog.at_level(logging.INFO):
+        client.get("/api/preparations", headers=AUTH)
+        client.get(f"/api/preparations/{saved_id}", headers=AUTH)
+        client.get("/api/preparations/999", headers=AUTH)
+
+    messages = preparation_logs(caplog)
+    assert all(PREPARATION_LOG.match(message) for message in messages)
+    assert [message.rsplit(" ", 1)[0] for message in messages] == [
+        "preparations action=list status=200",
+        "preparations action=detail status=200",
+        "preparations action=detail status=404",
+    ]
+    assert_no_content_logged(caplog)
+
+
+def test_a_rejected_confirm_logs_no_content(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    client = make_client((TOKEN,))
+    bad_sheet = {**SHEET, "covers": {"value": "cuarenta", "estimated": False}}
+
+    with caplog.at_level(logging.INFO):
+        response = post_preparation(client, sheet=bad_sheet)
+
+    # Rejected before the endpoint runs: the access log has its status, we add no line.
+    assert response.status_code == 422
+    assert preparation_logs(caplog) == []
+    assert_no_content_logged(caplog)
+    assert "cuarenta" not in caplog.text
+
+
+def test_an_unexpected_confirm_error_is_logged_as_500(
+    make_client: ClientFactory, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client = make_client((TOKEN,))
+
+    def broken(*args, **kwargs):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr(preparations, "find_by_confirm_id", broken)
+
+    with caplog.at_level(logging.INFO), pytest.raises(RuntimeError):
+        post_preparation(client)
+
+    [message] = preparation_logs(caplog)
+    assert message.startswith("preparations action=confirm status=500 ")
+    assert_no_content_logged(caplog)

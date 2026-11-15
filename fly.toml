@@ -6,6 +6,13 @@ primary_region = "cdg"
 
 [env]
   PORT = "8080"
+  DATABASE_PATH = "/data/escandaya.db"
+
+# The SQLite database lives on this volume, so it survives deploys and restarts.
+# One volume means one machine: never scale this app above one machine.
+[mounts]
+  source = "escandaya_data"
+  destination = "/data"
 
 [http_service]
   internal_port = 8080

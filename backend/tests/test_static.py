@@ -13,7 +13,8 @@ def client(tmp_path: Path) -> TestClient:
     (tmp_path / "assets").mkdir()
     (tmp_path / "assets" / "app.js").write_text("console.log('app')")
     (tmp_path.parent / "secret.txt").write_text("secret")
-    return TestClient(create_app(static_dir=tmp_path))
+    # Not started, so the database is never opened; it lives outside the served folder.
+    return TestClient(create_app(static_dir=tmp_path, database_path=tmp_path.parent / "app.db"))
 
 
 def test_root_serves_index(client: TestClient) -> None:
@@ -62,8 +63,8 @@ def test_cannot_read_files_outside_static_dir(client: TestClient) -> None:
     assert response.text != "secret"
 
 
-def test_without_static_dir_only_the_api_is_served() -> None:
-    client = TestClient(create_app(static_dir=None))
+def test_without_static_dir_only_the_api_is_served(tmp_path: Path) -> None:
+    client = TestClient(create_app(static_dir=None, database_path=tmp_path / "app.db"))
 
     assert client.get("/api/health").status_code == 200
     assert client.get("/").status_code == 404

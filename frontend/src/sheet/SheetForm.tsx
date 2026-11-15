@@ -1,5 +1,12 @@
 import { useId, useReducer } from "react";
-import { type EditableUnit, editSheet, emptyFields, toEditable } from "./sheetEditor";
+import {
+  canConfirm,
+  type EditableUnit,
+  editSheet,
+  emptyFields,
+  toEditable,
+  toSheet,
+} from "./sheetEditor";
 import { type Sheet, UNITS } from "./types";
 import "./SheetForm.css";
 
@@ -97,15 +104,29 @@ function EstimatedField({
   );
 }
 
+export interface SheetFormProps {
+  /** The sheet returned by the backend: the form's starting values. */
+  sheet: Sheet;
+  /** Called with the edited sheet when "Confirmar" is tapped. */
+  onConfirm: (sheet: Sheet) => void;
+  /** Saving, or saved: the button shows "Guardando…" and is disabled. */
+  confirming: boolean;
+  confirmError: string | null;
+}
+
 /**
  * The sheet returned by the backend, as an editable form. Edits stay on the phone;
- * the "Falta" marks are recomputed from the edited values on every change.
+ * the "Falta" marks are recomputed from the edited values on every change. The edits
+ * live here, so a failed confirm keeps them for the retry.
  */
-function SheetForm({ sheet }: { sheet: Sheet }) {
+function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProps) {
   const [editable, dispatch] = useReducer(editSheet, sheet, toEditable);
   const missing = new Set(emptyFields(editable));
+  const allowed = canConfirm(editable);
 
   return (
+    // Only the button confirms: the keyboard's "Ir" key would submit the form while
+    // the chef is still typing a quantity.
     <form className="sheet-form" aria-label="Ficha" onSubmit={(event) => event.preventDefault()}>
       <TextField
         label="Nombre"
@@ -203,6 +224,21 @@ function SheetForm({ sheet }: { sheet: Sheet }) {
           Añadir ingrediente
         </button>
       </fieldset>
+
+      {!allowed && (
+        <p className="sheet-hint">
+          Escribe el nombre de la preparación y de cada ingrediente para confirmar.
+        </p>
+      )}
+      {confirmError && <p role="alert">{confirmError}</p>}
+      <button
+        type="button"
+        className="sheet-confirm"
+        disabled={confirming || !allowed}
+        onClick={() => onConfirm(toSheet(editable))}
+      >
+        {confirming ? "Guardando…" : "Confirmar"}
+      </button>
     </form>
   );
 }

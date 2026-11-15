@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Smoke test for a deployed Escandaya:
 #   1. /api/health must answer {"status":"ok"} (retried while the app starts).
-#   2. /api/session and POST /api/drafts without a token must answer 401, so the API
-#      is not open.
+#   2. /api/session, POST /api/drafts and GET /api/preparations without a token must
+#      answer 401, so the API is not open.
 # Usage: scripts/smoke.sh [base-url]   (default: https://escandaya.fly.dev)
 set -u
 
@@ -55,3 +55,4 @@ needs_token GET /api/session
 # Empty text: if the token check were ever missing, the backend would answer 422 for the
 # text and fail this check, without calling (and paying for) the model.
 needs_token POST /api/drafts '{"text": ""}'
+needs_token GET /api/preparations
