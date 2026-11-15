@@ -32,6 +32,7 @@ PWA: React + Vite + TypeScript frontend, Python 3.12+ FastAPI backend.
 - `backend/src/backend/`: FastAPI app. Tests in `backend/tests/`.
 - `frontend/src/`: React app. Backend calls only in `frontend/src/api/client.ts`.
 - `specs/`: one folder per spec. `docs/`: scope and stack.
+- `docs/design/`: reference mockups for the UI (a PNG and an HTML file per screen, listed in its README). `DESIGN.md` at the root once spec 09 is done.
 
 ## Commands
 

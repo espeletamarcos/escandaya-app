@@ -1,0 +1,60 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Cinta: grabando</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400..800&amp;family=Sofia+Sans+Condensed:wght@600..800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D4EB8}a:hover{color:#16191D}
+.b-root{font-family:'Sofia Sans',sans-serif;color:#16191D;font-variant-numeric:tabular-nums lining-nums}
+.b-cond{font-family:'Sofia Sans Condensed',sans-serif}
+.b-tape{display:inline-block;background:#A9E07F;padding:8px 18px 6px;font-family:'Sofia Sans Condensed',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;color:#16191D;transform:rotate(-1.5deg);transform-origin:left center;box-shadow:0 1px 1px rgba(22,25,29,0.12),0 3px 8px rgba(22,25,29,0.10);clip-path:polygon(0 6%,3% 0,6% 7%,94% 3%,97% 0,100% 8%,99% 50%,100% 92%,96% 100%,92% 94%,8% 98%,4% 92%,0 100%,1% 50%)}
+.b-step{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;border-top:1px solid #E1E5E8;font-size:16px}
+</style>
+</head><body>
+<div class="b-root" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #EDF0F1; display: flex; flex-direction: column;">
+
+  <header style="padding: 24px 20px 0; display: flex; flex-direction: column; gap: 14px;">
+    <h1 style="margin: 0;"><span class="b-tape" style="font-size: 30px; line-height: 1.1;">Nueva ficha</span></h1>
+  </header>
+
+  <section aria-label="Grabación" style="padding: 48px 20px 0; display: flex; flex-direction: column; align-items: center; gap: 28px;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+      <span class="b-cond" style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; letter-spacing: 0.04em; color: #C42F27;">
+        <span aria-hidden="true" style="width: 10px; height: 10px; background: #C42F27; border-radius: 50%;"></span>
+        GRABANDO
+      </span>
+      <span role="timer" style="font-size: 72px; line-height: 1; font-weight: 800; letter-spacing: -0.03em;">0:42</span>
+    </div>
+    <button type="button" aria-label="Parar la grabación" style="width: 132px; height: 132px; border-radius: 50%; background: #16191D; border: 8px solid #A9E07F; box-shadow: 0 2px 4px rgba(22,25,29,0.12), 0 10px 24px rgba(45,106,39,0.22); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+      <span aria-hidden="true" style="width: 34px; height: 34px; border-radius: 4px; background: #FFFFFF;"></span>
+    </button>
+    <p style="margin: 0; max-width: 300px; text-align: center; font-size: 16px; line-height: 1.45; color: #4D555C;">Di el nombre, cuánto sale, para cuántas raciones y qué lleva.</p>
+  </section>
+
+  <section aria-label="Pasos" style="margin: 36px 12px 0; background: #FFFFFF; border-radius: 10px; box-shadow: 0 1px 2px rgba(22,25,29,0.06), 0 4px 12px rgba(22,25,29,0.05); overflow: hidden;">
+    <div class="b-step" style="border-top: 0; font-weight: 800;">
+      <span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #C42F27; display: flex; align-items: center; justify-content: center;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #C42F27;"></span></span>
+      Grabar
+      <span style="margin-left: auto; font-size: 14px; font-weight: 700; color: #C42F27;">Ahora</span>
+    </div>
+    <div class="b-step" style="color: #4D555C;">
+      <span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #C9D0D4;"></span>
+      Transcribir
+    </div>
+    <div class="b-step" style="color: #4D555C;">
+      <span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid #C9D0D4;"></span>
+      Crear ficha
+      <span style="margin-left: auto; font-size: 14px;">unos 10 s</span>
+    </div>
+  </section>
+
+  <nav aria-label="Secciones" style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; background: #FFFFFF; border-top: 1px solid #D5DADD; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));">
+    <button type="button" aria-current="page" style="background: transparent; border: 0; font: inherit; font-size: 13px; font-weight: 800; color: #16191D; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; gap: 4px; cursor: pointer;">
+      <span style="background: #A9E07F; border-radius: 14px; padding: 2px 16px; display: flex;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg></span>
+      Nueva ficha
+    </button>
+    <button type="button" style="background: transparent; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: #4D555C; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; gap: 4px; cursor: pointer;">
+      <span style="padding: 2px 16px; display: flex;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"></path><path d="M4 6h1M4 12h1M4 18h1"></path></svg></span>
+      Preparaciones
+    </button>
+  </nav>
+</div>
+</body></html>

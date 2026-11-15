@@ -10,7 +10,7 @@ related_targets: ["frontend/src/screens/RecordScreen.tsx","frontend/src/screens/
 Scope: the whole PWA shell and its screens (record, draft sheet, preparations list, saved sheet). Mode: Operate.
 Audience and job: the chef, calm, on an iPhone; dictate a preparation, check and confirm the sheet, find it later and read its cost.
 Constraints: PRODUCT.md (light theme, light green primary, Spanish, generous touch targets, estimated vs confirmed always visible).
-Reference mockups: Design canvas https://claude.ai/artifact/1EXpL5vayJdSi88sqRBvzu, page "Ronda 2", row B (four artboards). Costs there are example data until specs 06 and 07.
+Reference mockups: docs/design/ (six screens, PNG plus HTML, described in specs/09-styling/spec.md under Screens), exported from the Design canvas https://claude.ai/artifact/1EXpL5vayJdSi88sqRBvzu, page "Ronda 2". Costs there are example data until specs 06 and 07. The finish review compares screenshots of the built app with these PNGs.
 Unresolved: icon for the PWA; whether a third tab (Prices) arrives with spec 06.
 
 ## Direction contract

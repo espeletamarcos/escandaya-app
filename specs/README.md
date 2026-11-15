@@ -28,10 +28,11 @@ A spec is `implemented` when every acceptance criterion has a passing test or a 
 | 06 | Prices by voice | Dictated prices are matched to ingredients | not started |
 | 07 | Cost per cover | Cost of each preparation and total for the menu, with confirmed vs estimated share | not started |
 | 08 | Access and limits | Daily call cap per token, logging of calls and their cost | not started |
+| 09 | Styling | The whole app in one look (direction B, masking tape and light green), tokens in `index.css` and `DESIGN.md` | approved |
 
 ## Order
 
-01 -> 02 -> 03 -> 04 -> 05 -> 06 is a chain: each one needs the previous. 07 comes after 05 and 06. Only the next spec is written in detail; the rest may change with what we learn.
+01 -> 02 -> 03 -> 04 -> 05 -> 06 is a chain: each one needs the previous. 07 comes after 05 and 06. 09 goes right after 05, before 06: it is numbered 09 so the spec numbers already in the code stay valid. Only the next spec is written in detail; the rest may change with what we learn.
 
 ## Watch list
 
