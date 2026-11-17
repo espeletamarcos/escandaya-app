@@ -19,6 +19,7 @@ import PreparationsScreen from "./screens/PreparationsScreen";
 import RecordScreen from "./screens/RecordScreen";
 import { CheckingScreen, UnavailableScreen } from "./screens/SessionStatus";
 import type { CreateDraftFn, TranscribeFn } from "./sheet/useVoiceSheet";
+import { ListIcon, MicrophoneIcon } from "./ui/icons";
 import "./App.css";
 
 /** The part of the API client the gate uses; tests pass a fake. */
@@ -50,8 +51,8 @@ type View = { kind: "record" } | { kind: "list" } | { kind: "detail"; id: number
 
 /**
  * The app once the token is accepted: the record screen, the list and one
- * preparation. No URL routing: three views, switched by two buttons. The bottom
- * navigation comes with the styling spec.
+ * preparation. No URL routing: three views, switched by the two tabs of the
+ * bottom bar.
  */
 function Unlocked({ recorder, api }: { recorder: Recorder; api: AppApi }) {
   const [view, setView] = useState<View>({ kind: "record" });
@@ -74,49 +75,60 @@ function Unlocked({ recorder, api }: { recorder: Recorder; api: AppApi }) {
 
   return (
     <>
-      <nav className="app-nav" aria-label="Secciones">
+      <div className="app-content">
+        {/* Hidden, not removed, so an unconfirmed sheet survives a look at the list. */}
+        <div hidden={!onRecord}>
+          <RecordScreen
+            key={recordKey}
+            recorder={recorder}
+            transcribe={api.transcribe}
+            createDraft={api.createDraft}
+            confirmPreparation={api.confirmPreparation}
+            onSaved={onSaved}
+          />
+        </div>
+        {view.kind === "list" && (
+          <PreparationsScreen
+            listPreparations={api.listPreparations}
+            notice={notice}
+            onOpen={(id) => go({ kind: "detail", id })}
+          />
+        )}
+        {view.kind === "detail" && (
+          <PreparationScreen
+            key={view.id}
+            id={view.id}
+            getPreparation={api.getPreparation}
+            onBack={() => go({ kind: "list" })}
+          />
+        )}
+      </div>
+
+      {/* After the content, so the focus order follows the screen: the bar is at the bottom. */}
+      <nav className="tab-bar" aria-label="Secciones">
         <button
           type="button"
+          className="tab"
           aria-current={onRecord ? "page" : undefined}
           onClick={() => go({ kind: "record" })}
         >
+          <span className="tab-icon">
+            <MicrophoneIcon />
+          </span>
           Nueva ficha
         </button>
         <button
           type="button"
+          className="tab"
           aria-current={onRecord ? undefined : "page"}
           onClick={() => go({ kind: "list" })}
         >
+          <span className="tab-icon">
+            <ListIcon />
+          </span>
           Preparaciones
         </button>
       </nav>
-
-      {/* Hidden, not removed, so an unconfirmed sheet survives a look at the list. */}
-      <div hidden={!onRecord}>
-        <RecordScreen
-          key={recordKey}
-          recorder={recorder}
-          transcribe={api.transcribe}
-          createDraft={api.createDraft}
-          confirmPreparation={api.confirmPreparation}
-          onSaved={onSaved}
-        />
-      </div>
-      {view.kind === "list" && (
-        <PreparationsScreen
-          listPreparations={api.listPreparations}
-          notice={notice}
-          onOpen={(id) => go({ kind: "detail", id })}
-        />
-      )}
-      {view.kind === "detail" && (
-        <PreparationScreen
-          key={view.id}
-          id={view.id}
-          getPreparation={api.getPreparation}
-          onBack={() => go({ kind: "list" })}
-        />
-      )}
     </>
   );
 }
