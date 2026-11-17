@@ -13,16 +13,21 @@ const SHEET: Sheet = {
   ],
 };
 
+/** A closed or open line: the button whose name starts with "Editar <what>". */
+const line = (what: string) => screen.getByRole("button", { name: new RegExp(`^Editar ${what}`) });
+const isOpen = (button: HTMLElement) => button.getAttribute("aria-expanded") === "true";
+
 const group = (name: string) => screen.getByRole("group", { name });
 const ingredient = (position: number) => group(`Ingrediente ${position}`);
 const control = (container: HTMLElement, label: string) =>
   within(container).getByLabelText(label) as HTMLInputElement & HTMLSelectElement;
 
-/** The sheet's own name field; each ingredient row has a "Nombre" too. */
-const sheetName = () =>
-  screen.getAllByLabelText("Nombre").find((el) => el.closest("fieldset") === null) as HTMLInputElement;
+/** The only "Nombre" field on screen: one line is open at a time. */
+const nameField = () => screen.getByLabelText("Nombre") as HTMLInputElement;
+const done = () => screen.getByRole("button", { name: "Listo" });
+const addButton = () => screen.getByRole("button", { name: "Añadir ingrediente" });
 
-/** The `name` of every control marked with "Falta", in page order. */
+/** The `name` of every field marked with "Falta", in page order. */
 function markedFields(): (string | null)[] {
   return Array.from(document.querySelectorAll("[aria-invalid='true']")).map((el) =>
     el.getAttribute("name"),
@@ -60,55 +65,47 @@ function renderForm(sheet: Sheet = SHEET, props: Partial<SheetFormProps> = {}) {
   };
 }
 
-describe("SheetForm (04-C5)", () => {
-  it("shows the sheet's values in labelled fields", () => {
+describe("SheetForm, read like the saved sheet (04-C5, 09-C8)", () => {
+  it("shows every line closed, as a button that names what it opens", () => {
     renderForm();
 
-    expect(sheetName().value).toBe("Tartar de atún");
-    expect(control(group("Rendimiento"), "Cantidad").value).toBe("2,5");
-    expect(control(group("Rendimiento"), "Unidad").value).toBe("kg");
-    expect(control(group("Raciones"), "Cantidad").value).toBe("30");
-
-    const first = ingredient(1);
-    expect(control(first, "Nombre").value).toBe("atún rojo");
-    expect(control(first, "Cantidad").value).toBe("1500");
-    expect(control(first, "Unidad").value).toBe("g");
-    const second = ingredient(2);
-    expect(control(second, "Nombre").value).toBe("un puñado de cebollino");
-    expect(control(second, "Cantidad").value).toBe("");
-    expect(control(second, "Unidad").value).toBe("");
+    expect(line("nombre").textContent).toContain("Tartar de atún");
+    expect(screen.getByRole("heading", { level: 1 }).contains(line("nombre"))).toBe(true);
+    expect(line("rendimiento").textContent).toContain("2,5 kg");
+    expect(line("raciones").textContent).toContain("30 raciones");
+    expect(line("atún rojo").textContent).toContain("1500 g");
+    expect(line("un puñado de cebollino")).toBeDefined();
+    for (const what of ["nombre", "rendimiento", "raciones", "atún rojo", "un puñado"]) {
+      expect(line(what).getAttribute("aria-expanded")).toBe("false");
+    }
+    expect(screen.queryAllByRole("textbox")).toEqual([]);
   });
 
-  it("shows estimated values through their checked toggle", () => {
+  it("shows estimated values with ≈, read as estimado", () => {
     renderForm();
 
-    expect(control(group("Rendimiento"), "Estimado").checked).toBe(true);
-    expect(control(group("Raciones"), "Estimado").checked).toBe(false);
-    expect(control(ingredient(1), "Estimado").checked).toBe(false);
+    expect(
+      screen.getByRole("button", { name: "Editar rendimiento: 2,5 kg (estimado)" }),
+    ).toBeDefined();
+    expect(line("rendimiento").querySelector(".estimated")?.textContent).toContain("≈");
   });
 
-  it("uses the decimal keyboard for quantities and the numeric one for covers", () => {
+  it("marks exactly the missing values of the returned sheet on the closed lines", () => {
     renderForm();
 
-    expect(control(group("Rendimiento"), "Cantidad").getAttribute("inputmode")).toBe("decimal");
-    expect(control(ingredient(1), "Cantidad").getAttribute("inputmode")).toBe("decimal");
-    expect(control(group("Raciones"), "Cantidad").getAttribute("inputmode")).toBe("numeric");
+    expect(
+      screen.getByRole("button", { name: "Editar un puñado de cebollino Falta" }),
+    ).toBeDefined();
+    expect(screen.getAllByText("Falta")).toHaveLength(1);
   });
 
-  it("offers an empty option and the five units", () => {
+  it("marks the missing fields of an open line", () => {
     renderForm();
-
-    const options = Array.from(control(ingredient(1), "Unidad").options).map((o) => o.value);
-    expect(options).toEqual(["", "g", "kg", "ml", "l", "ud"]);
-  });
-
-  it("marks exactly the missing fields of the returned sheet", () => {
-    renderForm();
+    fireEvent.click(line("un puñado"));
 
     expect(markedFields()).toEqual(["ingredients.1.quantity", "ingredients.1.unit"]);
     expect(isMarked(control(ingredient(2), "Cantidad"))).toBe(true);
     expect(isMarked(control(ingredient(2), "Unidad"))).toBe(true);
-    expect(screen.getAllByText("Falta")).toHaveLength(2);
   });
 
   it("does not render a form that submits and reloads the page", () => {
@@ -119,28 +116,127 @@ describe("SheetForm (04-C5)", () => {
   });
 });
 
-describe("editing (04-C6)", () => {
+describe("opening a line (09-C8)", () => {
+  it("shows the ingredient's fields and moves the focus to its name", () => {
+    renderForm();
+
+    fireEvent.click(line("atún rojo"));
+
+    expect(isOpen(line("atún rojo"))).toBe(true);
+    const first = ingredient(1);
+    expect(control(first, "Nombre").value).toBe("atún rojo");
+    expect(control(first, "Cantidad").value).toBe("1500");
+    expect(control(first, "Unidad").value).toBe("g");
+    expect(control(first, "Estimado").checked).toBe(false);
+    expect(document.activeElement).toBe(control(first, "Nombre"));
+  });
+
+  it("closes with Listo and gives the focus back to the line", () => {
+    renderForm();
+    fireEvent.click(line("atún rojo"));
+
+    fireEvent.click(done());
+
+    expect(isOpen(line("atún rojo"))).toBe(false);
+    expect(screen.queryByRole("group", { name: "Ingrediente 1" })).toBeNull();
+    expect(document.activeElement).toBe(line("atún rojo"));
+  });
+
+  it("keeps one line open: opening another closes the first and keeps its edits", () => {
+    renderForm();
+    fireEvent.click(line("atún rojo"));
+    type(control(ingredient(1), "Cantidad"), "1,2");
+    type(control(ingredient(1), "Unidad"), "kg");
+
+    fireEvent.click(line("un puñado"));
+
+    expect(isOpen(line("atún rojo"))).toBe(false);
+    expect(isOpen(line("un puñado"))).toBe(true);
+    expect(screen.queryByRole("group", { name: "Ingrediente 1" })).toBeNull();
+    expect(line("atún rojo").textContent).toContain("1,2 kg");
+    expect(document.activeElement).toBe(control(ingredient(2), "Nombre"));
+  });
+
+  it("opens the name, the yield and the covers the same way", () => {
+    renderForm();
+
+    fireEvent.click(line("nombre"));
+    expect(isOpen(line("nombre"))).toBe(true);
+    expect(nameField().value).toBe("Tartar de atún");
+    expect(document.activeElement).toBe(nameField());
+
+    fireEvent.click(line("rendimiento"));
+    expect(isOpen(line("nombre"))).toBe(false);
+    expect(control(group("Rendimiento"), "Cantidad").value).toBe("2,5");
+    expect(control(group("Rendimiento"), "Unidad").value).toBe("kg");
+    expect(control(group("Rendimiento"), "Estimado").checked).toBe(true);
+    expect(document.activeElement).toBe(control(group("Rendimiento"), "Cantidad"));
+
+    fireEvent.click(line("raciones"));
+    expect(control(group("Raciones"), "Cantidad").value).toBe("30");
+    expect(control(group("Raciones"), "Estimado").checked).toBe(false);
+    expect(document.activeElement).toBe(control(group("Raciones"), "Cantidad"));
+
+    fireEvent.click(done());
+    expect(document.activeElement).toBe(line("raciones"));
+  });
+
+  it("closes the open line when its own button is tapped again", () => {
+    renderForm();
+    fireEvent.click(line("atún rojo"));
+
+    fireEvent.click(line("atún rojo"));
+
+    expect(isOpen(line("atún rojo"))).toBe(false);
+  });
+
+  it("uses the decimal keyboard for quantities and the numeric one for covers", () => {
+    renderForm();
+
+    fireEvent.click(line("rendimiento"));
+    expect(control(group("Rendimiento"), "Cantidad").getAttribute("inputmode")).toBe("decimal");
+    fireEvent.click(line("atún rojo"));
+    expect(control(ingredient(1), "Cantidad").getAttribute("inputmode")).toBe("decimal");
+    fireEvent.click(line("raciones"));
+    expect(control(group("Raciones"), "Cantidad").getAttribute("inputmode")).toBe("numeric");
+  });
+
+  it("offers an empty option and the five units", () => {
+    renderForm();
+    fireEvent.click(line("atún rojo"));
+
+    const options = Array.from(control(ingredient(1), "Unidad").options).map((o) => o.value);
+    expect(options).toEqual(["", "g", "kg", "ml", "l", "ud"]);
+  });
+});
+
+describe("editing (04-C6, 09-C8)", () => {
   it("changes the name, the yield and the covers", () => {
     renderForm();
 
-    type(sheetName(), "Tartar");
+    fireEvent.click(line("nombre"));
+    type(nameField(), "Tartar");
+    fireEvent.click(line("rendimiento"));
     type(control(group("Rendimiento"), "Cantidad"), "0,");
     type(control(group("Rendimiento"), "Unidad"), "l");
     fireEvent.click(control(group("Rendimiento"), "Estimado"));
+    // The half-typed decimal comma stays while the line is open.
+    expect(control(group("Rendimiento"), "Cantidad").value).toBe("0,");
+    fireEvent.click(line("raciones"));
     type(control(group("Raciones"), "Cantidad"), "40");
     fireEvent.click(control(group("Raciones"), "Estimado"));
+    fireEvent.click(done());
 
-    expect(sheetName().value).toBe("Tartar");
-    // The half-typed decimal comma stays.
-    expect(control(group("Rendimiento"), "Cantidad").value).toBe("0,");
-    expect(control(group("Rendimiento"), "Unidad").value).toBe("l");
-    expect(control(group("Rendimiento"), "Estimado").checked).toBe(false);
-    expect(control(group("Raciones"), "Cantidad").value).toBe("40");
-    expect(control(group("Raciones"), "Estimado").checked).toBe(true);
+    expect(line("nombre").textContent).toContain("Tartar");
+    expect(line("rendimiento").textContent).toContain("l · falta la cantidad");
+    expect(
+      screen.getByRole("button", { name: "Editar raciones: 40 raciones (estimado)" }),
+    ).toBeDefined();
   });
 
   it("changes each field of one ingredient", () => {
     renderForm();
+    fireEvent.click(line("un puñado"));
     const second = ingredient(2);
 
     type(control(second, "Nombre"), "cebollino");
@@ -152,88 +248,120 @@ describe("editing (04-C6)", () => {
     expect(control(second, "Cantidad").value).toBe("20,5");
     expect(control(second, "Unidad").value).toBe("g");
     expect(control(second, "Estimado").checked).toBe(true);
-    expect(control(ingredient(1), "Nombre").value).toBe("atún rojo");
+    fireEvent.click(done());
+    expect(
+      screen.getByRole("button", { name: "Editar cebollino 20,5 g (estimado)" }),
+    ).toBeDefined();
+    expect(line("atún rojo")).toBeDefined();
   });
 
-  it("removes a mark when the field is filled in, and adds it when it is emptied", () => {
+  it("updates the marks as values change, open or closed", () => {
     renderForm();
+    fireEvent.click(line("un puñado"));
 
     type(control(ingredient(2), "Cantidad"), "20");
     type(control(ingredient(2), "Unidad"), "g");
     expect(markedFields()).toEqual([]);
     expect(screen.queryByText("Falta")).toBeNull();
 
+    fireEvent.click(line("raciones"));
     type(control(group("Raciones"), "Cantidad"), "");
-    type(sheetName(), " ");
-    expect(markedFields()).toEqual(["name", "covers"]);
+    expect(markedFields()).toEqual(["covers"]);
     expect(isMarked(control(group("Raciones"), "Cantidad"))).toBe(true);
-    expect(isMarked(sheetName())).toBe(true);
+
+    fireEvent.click(line("nombre"));
+    type(nameField(), " ");
+    expect(isMarked(nameField())).toBe(true);
+    fireEvent.click(done());
+    expect(screen.getByRole("button", { name: "Editar nombre: Sin nombre Falta" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Editar raciones: Raciones Falta" })).toBeDefined();
   });
 
   it("marks a quantity that is not a number", () => {
     renderForm();
+    fireEvent.click(line("atún rojo"));
 
     type(control(ingredient(1), "Cantidad"), "mucho");
 
     expect(isMarked(control(ingredient(1), "Cantidad"))).toBe(true);
+    fireEvent.click(done());
+    expect(line("atún rojo").textContent).toContain("falta la cantidad");
   });
+});
 
-  it("deletes an ingredient with one tap and no confirmation", () => {
-    const confirm = vi.spyOn(window, "confirm");
+describe("adding and deleting (09-C8)", () => {
+  it("adds an empty line at the end, already open, with its name focused", () => {
     renderForm();
 
-    fireEvent.click(within(ingredient(1)).getByRole("button", { name: "Eliminar" }));
-
-    expect(confirm).not.toHaveBeenCalled();
-    expect(screen.queryByRole("group", { name: "Ingrediente 2" })).toBeNull();
-    expect(control(ingredient(1), "Nombre").value).toBe("un puñado de cebollino");
-    // The marks follow the new position.
-    expect(markedFields()).toEqual(["ingredients.0.quantity", "ingredients.0.unit"]);
-  });
-
-  it("adds an empty ingredient at the end, marked as missing", () => {
-    renderForm();
-
-    fireEvent.click(screen.getByRole("button", { name: "Añadir ingrediente" }));
+    fireEvent.click(addButton());
 
     const third = ingredient(3);
     expect(control(third, "Nombre").value).toBe("");
     expect(control(third, "Cantidad").value).toBe("");
     expect(control(third, "Unidad").value).toBe("");
     expect(control(third, "Estimado").checked).toBe(false);
+    expect(document.activeElement).toBe(control(third, "Nombre"));
     expect(markedFields()).toEqual([
-      "ingredients.1.quantity",
-      "ingredients.1.unit",
       "ingredients.2.name",
       "ingredients.2.quantity",
       "ingredients.2.unit",
     ]);
   });
 
-  it("keeps the focused field when a row above it is deleted", () => {
-    // Rows are keyed by ingredient id: keyed by position, React would remove the
-    // last row's elements instead, and the focus would be lost.
+  it("keeps an empty line findable once closed, with its marks", () => {
     renderForm();
-    const focused = control(ingredient(2), "Cantidad");
-    focused.focus();
+    fireEvent.click(addButton());
+
+    fireEvent.click(done());
+
+    expect(screen.getByRole("button", { name: "Editar Sin nombre Falta Falta" })).toBeDefined();
+  });
+
+  it("closes the open line when another one is added", () => {
+    renderForm();
+    fireEvent.click(line("atún rojo"));
+
+    fireEvent.click(addButton());
+
+    expect(isOpen(line("atún rojo"))).toBe(false);
+    expect(ingredient(3)).toBeDefined();
+  });
+
+  it("deletes with one tap and no confirmation, and focuses the next line", () => {
+    const confirm = vi.spyOn(window, "confirm");
+    renderForm();
+    fireEvent.click(line("atún rojo"));
 
     fireEvent.click(within(ingredient(1)).getByRole("button", { name: "Eliminar" }));
 
-    expect(control(ingredient(1), "Cantidad")).toBe(focused);
-    expect(document.activeElement).toBe(focused);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /^Editar atún rojo/ })).toBeNull();
+    expect(screen.queryByRole("group", { name: /^Ingrediente/ })).toBeNull();
+    expect(document.activeElement).toBe(line("un puñado"));
   });
 
-  it("starts with no rows for a sheet without ingredients, and can add one", () => {
+  it("focuses Añadir ingrediente after deleting the last line", () => {
+    renderForm();
+    fireEvent.click(line("un puñado"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
+
+    expect(document.activeElement).toBe(addButton());
+  });
+
+  it("starts with no lines for a sheet without ingredients, and can add one", () => {
     renderForm({ ...SHEET, ingredients: [] });
 
-    expect(screen.queryByRole("group", { name: "Ingrediente 1" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Editar (?!nombre|rendimiento|raciones)/ }),
+    ).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Añadir ingrediente" }));
+    fireEvent.click(addButton());
     expect(ingredient(1)).toBeDefined();
   });
 });
 
-describe("Confirmar (05-C1)", () => {
+describe("Confirmar (05-C1, 09-C8)", () => {
   const confirmButton = () => screen.getByRole("button", { name: /Confirmar|Guardando…/ });
   const isDisabled = () => confirmButton().hasAttribute("disabled");
   const HINT = "Escribe el nombre de la preparación y de cada ingrediente para confirmar.";
@@ -243,17 +371,20 @@ describe("Confirmar (05-C1)", () => {
 
     const buttons = screen.getAllByRole("button");
     expect(buttons[buttons.length - 1]).toBe(confirmButton());
-    expect(confirmButton().textContent).toBe("Confirmar");
+    expect(confirmButton().textContent).toBe("Confirmar ficha");
     expect(isDisabled()).toBe(false);
     expect(screen.queryByText(HINT)).toBeNull();
   });
 
-  it("sends the edited sheet, read back from the form", () => {
+  it("sends the edited sheet with a line still open", () => {
     const { onConfirm } = renderForm();
-    type(sheetName(), " Tartar ");
+    fireEvent.click(line("nombre"));
+    type(nameField(), " Tartar ");
+    fireEvent.click(line("rendimiento"));
     type(control(group("Rendimiento"), "Cantidad"), "3,5");
+    fireEvent.click(line("un puñado"));
     type(control(ingredient(2), "Cantidad"), "20");
-    fireEvent.change(control(ingredient(2), "Unidad"), { target: { value: "g" } });
+    type(control(ingredient(2), "Unidad"), "g");
 
     fireEvent.click(confirmButton());
 
@@ -265,8 +396,23 @@ describe("Confirmar (05-C1)", () => {
     });
   });
 
+  it("sends the same sheet with every line closed", () => {
+    const { onConfirm } = renderForm();
+    fireEvent.click(line("un puñado"));
+    type(control(ingredient(2), "Cantidad"), "20");
+    fireEvent.click(done());
+
+    fireEvent.click(confirmButton());
+
+    expect(onConfirm).toHaveBeenCalledExactlyOnceWith({
+      ...SHEET,
+      ingredients: [SHEET.ingredients[0], { ...SHEET.ingredients[1], quantity: 20 }],
+    });
+  });
+
   it("can be confirmed with missing data", () => {
     const { onConfirm } = renderForm();
+    fireEvent.click(line("raciones"));
     type(control(group("Raciones"), "Cantidad"), "");
 
     fireEvent.click(confirmButton());
@@ -275,23 +421,27 @@ describe("Confirmar (05-C1)", () => {
     expect(onConfirm.mock.calls[0][0].covers.value).toBeNull();
   });
 
-  it("is disabled with a hint while the name is empty", () => {
+  it("is disabled with a hint while the name is empty, open or closed", () => {
     const { onConfirm } = renderForm();
-    type(sheetName(), "  ");
+    fireEvent.click(line("nombre"));
+    type(nameField(), "  ");
 
     expect(isDisabled()).toBe(true);
     expect(screen.getByText(HINT)).toBeDefined();
+    fireEvent.click(done());
+    expect(isDisabled()).toBe(true);
     fireEvent.click(confirmButton());
     expect(onConfirm).not.toHaveBeenCalled();
 
-    type(sheetName(), "Tartar");
+    fireEvent.click(line("nombre"));
+    type(nameField(), "Tartar");
     expect(isDisabled()).toBe(false);
     expect(screen.queryByText(HINT)).toBeNull();
   });
 
-  it("is disabled while an ingredient has no name, such as a row just added", () => {
+  it("is disabled while an ingredient has no name, such as a line just added", () => {
     renderForm();
-    fireEvent.click(screen.getByRole("button", { name: "Añadir ingrediente" }));
+    fireEvent.click(addButton());
 
     expect(isDisabled()).toBe(true);
     expect(screen.getByText(HINT)).toBeDefined();
@@ -309,15 +459,17 @@ describe("Confirmar (05-C1)", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  it("shows the error and keeps the edits", () => {
+  it("shows the error and keeps the edits and the open line", () => {
     const { rerender } = renderForm();
-    type(sheetName(), "Tartar editado");
+    fireEvent.click(line("nombre"));
+    type(nameField(), "Tartar editado");
 
     rerender({ confirming: true });
     rerender({ confirming: false, confirmError: "No se ha podido guardar la ficha." });
 
     expect(screen.getByRole("alert").textContent).toBe("No se ha podido guardar la ficha.");
-    expect(sheetName().value).toBe("Tartar editado");
+    expect(isOpen(line("nombre"))).toBe(true);
+    expect(nameField().value).toBe("Tartar editado");
     expect(isDisabled()).toBe(false);
   });
 

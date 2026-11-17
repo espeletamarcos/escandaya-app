@@ -124,10 +124,13 @@ describe("RecordScreen", () => {
     const button = () => screen.getByRole("button", { name: BUTTON });
     const isDisabled = () => button().hasAttribute("disabled");
     const sheetForm = () => screen.queryByRole("form", { name: "Ficha" });
-    const sheetName = () =>
-      screen
-        .getAllByLabelText("Nombre")
-        .find((el) => el.closest("fieldset") === null) as HTMLInputElement;
+    /** The sheet's name field, opening its line first: the sheet is edited line by line (09-C8). */
+    const sheetName = () => {
+      if (!screen.queryByLabelText("Nombre")) {
+        fireEvent.click(screen.getByRole("button", { name: /^Editar nombre/ }));
+      }
+      return screen.getByLabelText("Nombre") as HTMLInputElement;
+    };
 
     it("shows no button before anything is recorded", () => {
       renderScreen();
@@ -181,6 +184,13 @@ describe("RecordScreen", () => {
       fireEvent.click(button());
       await screen.findByRole("form", { name: "Ficha" });
 
+      // On the closed lines, only the one with missing data has a mark…
+      const lines = screen.getAllByRole("button", { name: /^Editar / });
+      const withMark = lines.filter((line) => line.querySelector(".sheet-missing"));
+      expect(withMark).toEqual([screen.getByRole("button", { name: "Editar cebollino Falta" })]);
+
+      // …and, open, exactly its missing fields are marked.
+      fireEvent.click(withMark[0]);
       const marked = Array.from(document.querySelectorAll("[aria-invalid='true']")).map((el) =>
         el.getAttribute("name"),
       );

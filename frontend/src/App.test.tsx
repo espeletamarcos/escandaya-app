@@ -272,8 +272,13 @@ describe("App navigation (05-C1, 05-C4)", () => {
 
   const nav = (name: string) =>
     within(screen.getByRole("navigation", { name: "Secciones" })).getByRole("button", { name });
-  const sheetName = () =>
-    screen.getAllByLabelText("Nombre").find((el) => el.closest("fieldset") === null) as HTMLInputElement;
+  /** The sheet's name field, opening its line first: the sheet is edited line by line (09-C8). */
+  const sheetName = () => {
+    if (!screen.queryByLabelText("Nombre")) {
+      fireEvent.click(screen.getByRole("button", { name: /^Editar nombre/ }));
+    }
+    return screen.getByLabelText("Nombre") as HTMLInputElement;
+  };
 
   async function makeSheet() {
     fireEvent.click(screen.getByRole("button", { name: "Grabar" }));
@@ -335,7 +340,7 @@ describe("App navigation (05-C1, 05-C4)", () => {
     const api = await renderUnlocked();
     await makeSheet();
 
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar ficha" }));
 
     expect((await screen.findByRole("status")).textContent).toBe("Ficha guardada");
     expect(screen.getByRole("heading", { name: "Preparaciones" })).toBeDefined();
@@ -350,7 +355,7 @@ describe("App navigation (05-C1, 05-C4)", () => {
   it("drops the Ficha guardada notice once the chef moves on", async () => {
     await renderUnlocked();
     await makeSheet();
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar ficha" }));
     await screen.findByRole("status");
 
     fireEvent.click(nav("Nueva ficha"));
