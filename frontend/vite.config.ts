@@ -15,8 +15,9 @@ export default defineConfig({
         description: "Escandallos por voz con coste por ración",
         display: "standalone",
         start_url: "/",
-        theme_color: "#1f2937",
-        background_color: "#1f2937",
+        // The steel ground of index.css (--ground).
+        theme_color: "#edf0f1",
+        background_color: "#edf0f1",
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "icon-512.png", sizes: "512x512", type: "image/png" },
