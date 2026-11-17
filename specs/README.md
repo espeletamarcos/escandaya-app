@@ -28,7 +28,7 @@ A spec is `implemented` when every acceptance criterion has a passing test or a 
 | 06 | Prices by voice | Dictated prices are matched to ingredients | not started |
 | 07 | Cost per cover | Cost of each preparation and total for the menu, with confirmed vs estimated share | not started |
 | 08 | Access and limits | Daily call cap per token, logging of calls and their cost | not started |
-| 09 | Styling | The whole app in one look (direction B, masking tape and light green), tokens in `index.css` and `DESIGN.md` | approved |
+| 09 | Styling | The whole app in one look (direction B, masking tape and light green), tokens in `index.css` and `DESIGN.md` | in progress (iPhone check pending) |
 
 ## Order
 

@@ -1,0 +1,614 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-17T21:25:17+00:00",
+  "title": "Design System: Escandaya",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Steel Ground",
+        "canonical": "#EDF0F1",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#242526",
+          "#404243",
+          "#5F6262",
+          "#808384",
+          "#A3A5A6",
+          "#C7C9CA",
+          "#EDEFEF"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel White",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#16191D",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232528",
+          "#404246",
+          "#5E6166",
+          "#7F8388",
+          "#A2A5AA",
+          "#C6C9CD",
+          "#ECEFF2"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Grey",
+        "canonical": "#4D555C",
+        "tonalRamp": [
+          "#090C0E",
+          "#212629",
+          "#3D4348",
+          "#5B6268",
+          "#7B848B",
+          "#9EA6AD",
+          "#C3CAD0",
+          "#EAEFF4"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#E1E5E8",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232527",
+          "#404244",
+          "#5F6264",
+          "#7F8385",
+          "#A2A5A8",
+          "#C7C9CC",
+          "#ECEFF1"
+        ]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Rule Strong",
+        "canonical": "#D5DADD",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232527",
+          "#3F4244",
+          "#5E6264",
+          "#7F8386",
+          "#A2A6A8",
+          "#C6CACC",
+          "#ECEFF1"
+        ]
+      },
+      "field-border": {
+        "role": "neutral",
+        "displayName": "Field Border",
+        "canonical": "#828B92",
+        "tonalRamp": [
+          "#090C0E",
+          "#212629",
+          "#3D4347",
+          "#5B6268",
+          "#7B848B",
+          "#9EA6AC",
+          "#C3CAD0",
+          "#E9EFF4"
+        ]
+      },
+      "idle": {
+        "role": "neutral",
+        "displayName": "Idle",
+        "canonical": "#C9D0D4",
+        "tonalRamp": [
+          "#090B0D",
+          "#222627",
+          "#3E4345",
+          "#5D6265",
+          "#7D8387",
+          "#A0A6A9",
+          "#C5CACD",
+          "#EBEFF2"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Tape Green",
+        "canonical": "#A9E07F",
+        "tonalRamp": [
+          "#021000",
+          "#132D00",
+          "#2B4D04",
+          "#456F1C",
+          "#619334",
+          "#88B565",
+          "#B0D893",
+          "#D9FBC2"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Tape Green Hover",
+        "canonical": "#9FD873",
+        "tonalRamp": [
+          "#011000",
+          "#122D00",
+          "#2A4D00",
+          "#436F16",
+          "#5F942F",
+          "#86B662",
+          "#AFD891",
+          "#D8FCC1"
+        ]
+      },
+      "primary-pressed": {
+        "role": "primary",
+        "displayName": "Tape Green Pressed",
+        "canonical": "#93CF66",
+        "tonalRamp": [
+          "#011000",
+          "#102D00",
+          "#284E00",
+          "#417010",
+          "#5C942A",
+          "#84B65F",
+          "#ADD98F",
+          "#D7FCBF"
+        ]
+      },
+      "on-primary": {
+        "role": "primary",
+        "displayName": "Kitchen-Dark Green Ink",
+        "canonical": "#13240F",
+        "tonalRamp": [
+          "#070D05",
+          "#1E281C",
+          "#394636",
+          "#566752",
+          "#758970",
+          "#99AB95",
+          "#BFCFBB",
+          "#E6F3E2"
+        ]
+      },
+      "primary-wash": {
+        "role": "primary",
+        "displayName": "Green Wash",
+        "canonical": "#F3F9EC",
+        "tonalRamp": [
+          "#0A0C08",
+          "#242620",
+          "#40433C",
+          "#5F6359",
+          "#7F8579",
+          "#A2A79D",
+          "#C7CBC2",
+          "#ECF0E8"
+        ]
+      },
+      "green-text": {
+        "role": "secondary",
+        "displayName": "Name Green",
+        "canonical": "#4C9A2A",
+        "tonalRamp": [
+          "#001100",
+          "#032F00",
+          "#1A5000",
+          "#31730F",
+          "#4B9829",
+          "#77BA5F",
+          "#A2DC8F",
+          "#CFFFBF"
+        ]
+      },
+      "green-action": {
+        "role": "secondary",
+        "displayName": "Action Green",
+        "canonical": "#2D6A27",
+        "tonalRamp": [
+          "#001000",
+          "#0C2D09",
+          "#234D1F",
+          "#3C7036",
+          "#579450",
+          "#80B57A",
+          "#AAD8A4",
+          "#D5FBD0"
+        ]
+      },
+      "estimated": {
+        "role": "tertiary",
+        "displayName": "Marker Blue",
+        "canonical": "#1D4EB8",
+        "tonalRamp": [
+          "#00052D",
+          "#061F58",
+          "#193C86",
+          "#2F5BB7",
+          "#477CE9",
+          "#71A2FF",
+          "#9DC9FF",
+          "#CAEFFF"
+        ]
+      },
+      "marker-red": {
+        "role": "tertiary",
+        "displayName": "Marker Red",
+        "canonical": "#C42F27",
+        "tonalRamp": [
+          "#260000",
+          "#4F0000",
+          "#7B1310",
+          "#AB2D25",
+          "#DB483D",
+          "#F9786A",
+          "#FFA697",
+          "#FFD2C5"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Delete Red",
+        "canonical": "#B8261E",
+        "tonalRamp": [
+          "#250000",
+          "#4E0000",
+          "#7A1610",
+          "#A92F26",
+          "#DA4A3D",
+          "#F87A6A",
+          "#FFA797",
+          "#FFD3C5"
+        ]
+      },
+      "missing-bg": {
+        "role": "tertiary",
+        "displayName": "Missing Sticker Ground",
+        "canonical": "#F6DAD6",
+        "tonalRamp": [
+          "#110908",
+          "#2E2220",
+          "#4E3D3B",
+          "#705C59",
+          "#947C78",
+          "#B69F9C",
+          "#D8C4C1",
+          "#FBEAE8"
+        ]
+      },
+      "missing-ink": {
+        "role": "tertiary",
+        "displayName": "Missing Sticker Ink",
+        "canonical": "#9E231C",
+        "tonalRamp": [
+          "#230000",
+          "#4A0705",
+          "#742019",
+          "#A23930",
+          "#D05548",
+          "#EF8173",
+          "#FFAC9E",
+          "#FFD7CB"
+        ]
+      },
+      "disabled-bg": {
+        "role": "neutral",
+        "displayName": "Disabled Ground",
+        "canonical": "#DDE2E4",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232526",
+          "#404244",
+          "#5E6263",
+          "#7F8385",
+          "#A2A6A7",
+          "#C6CACB",
+          "#ECEFF0"
+        ]
+      },
+      "disabled-ink": {
+        "role": "neutral",
+        "displayName": "Disabled Ink",
+        "canonical": "#4D555C",
+        "tonalRamp": [
+          "#090C0E",
+          "#212629",
+          "#3D4348",
+          "#5B6268",
+          "#7B848B",
+          "#9EA6AD",
+          "#C3CAD0",
+          "#EAEFF4"
+        ]
+      },
+      "focus": {
+        "role": "tertiary",
+        "displayName": "Focus Blue",
+        "canonical": "#1D4EB8",
+        "tonalRamp": [
+          "#00052D",
+          "#061F58",
+          "#193C86",
+          "#2F5BB7",
+          "#477CE9",
+          "#71A2FF",
+          "#9DC9FF",
+          "#CAEFFF"
+        ]
+      },
+      "on-dark": {
+        "role": "neutral",
+        "displayName": "On Dark",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Timer",
+        "purpose": "The 72px recording timer only."
+      },
+      "headline": {
+        "displayName": "Tape Title",
+        "purpose": "The screen title on its tape, uppercase condensed."
+      },
+      "headline-long": {
+        "displayName": "Tape Title, long",
+        "purpose": "Titles over 24 characters: a smaller tape that stops at 90% width."
+      },
+      "title": {
+        "displayName": "Name",
+        "purpose": "Preparation names in lists (Name Green) and problem lines."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Primary button labels."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Field text, hints, the sheet meta line, loading lines."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Sheet rows and panel text, tabular figures."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "List meta, legend, hint, status lines, counts."
+      },
+      "section-label": {
+        "displayName": "Section Label",
+        "purpose": "Uppercase condensed panel headings and the red date."
+      },
+      "label": {
+        "displayName": "Field Label",
+        "purpose": "Condensed bold sentence-case labels above fields and column headers."
+      },
+      "mark": {
+        "displayName": "Mark",
+        "purpose": "The uppercase FALTA sticker."
+      }
+    },
+    "shadows": [
+      {
+        "name": "panel",
+        "value": "0 1px 2px rgb(22 25 29 / 0.06), 0 4px 12px rgb(22 25 29 / 0.05)",
+        "purpose": "Every white panel and the outline record button."
+      },
+      {
+        "name": "tape",
+        "value": "filter: drop-shadow(0 1px 1px rgb(22 25 29 / 0.14)) drop-shadow(0 3px 6px rgb(22 25 29 / 0.1))",
+        "purpose": "On the title h1 as a filter, so it follows the torn edges."
+      },
+      {
+        "name": "record",
+        "value": "0 2px 4px rgb(22 25 29 / 0.12), 0 12px 28px rgb(45 106 39 / 0.25)",
+        "purpose": "Record and stop buttons, with a green glow."
+      },
+      {
+        "name": "bar",
+        "value": "0 -1px 0 #D5DADD",
+        "purpose": "The line on top of the tab bar."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "State transitions: button fills, pressed scale, tab pill."
+      },
+      {
+        "name": "duration",
+        "value": "120ms",
+        "purpose": "Every state transition."
+      },
+      {
+        "name": "record-blink",
+        "value": "opacity 1 to 0.25, 1.6s ease-in-out infinite",
+        "purpose": "The red dot next to GRABANDO; still under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "column",
+        "value": "480px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Title Tape",
+      "kind": "custom",
+      "refersTo": "title-tape",
+      "description": "The screen h1 on a tilted, torn strip of light green masking tape; the system's signature.",
+      "html": "<h1 class=\"ds-title\"><span class=\"ds-title-tape\">Tartar de atún</span></h1>",
+      "css": ".ds-title{margin:0;font-size:30px;line-height:1.1;filter:drop-shadow(0 1px 1px rgb(22 25 29 / 0.14)) drop-shadow(0 3px 6px rgb(22 25 29 / 0.1));} .ds-title-tape{display:inline-block;padding:8px 18px 6px;background:#A9E07F;color:#16191D;font-family:var(--font-condensed, \"Sofia Sans Condensed\", \"Sofia Sans\", \"Arial Narrow\", sans-serif);font-weight:800;letter-spacing:0.02em;text-transform:uppercase;transform:rotate(-1.5deg);transform-origin:left center;clip-path:polygon(0 6%,3% 0,6% 7%,94% 3%,97% 0,100% 8%,99% 50%,100% 92%,96% 100%,92% 94%,8% 98%,4% 92%,0 100%,1% 50%);}"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Full-width light green action under dark text: Confirmar ficha, Entrar.",
+      "html": "<button class=\"ds-btn-primary\">Confirmar ficha</button>",
+      "css": ".ds-btn-primary{width:100%;min-height:56px;padding:0 20px;background:#A9E07F;border:0;border-radius:10px;color:#13240F;font-family:var(--font-sans, \"Sofia Sans\", system-ui, sans-serif);font-size:17px;font-weight:800;cursor:pointer;transition:background-color 120ms cubic-bezier(0.2,0,0,1),transform 120ms cubic-bezier(0.2,0,0,1);} .ds-btn-primary:hover{background:#9FD873;} .ds-btn-primary:active{background:#93CF66;transform:scale(0.98);} .ds-btn-primary:focus-visible{outline:2px solid #1D4EB8;outline-offset:2px;} .ds-btn-primary:disabled{background:#DDE2E4;color:#4D555C;cursor:default;}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Green-text action with no fill: Añadir ingrediente, ‹ Preparaciones, Reintentar.",
+      "html": "<button class=\"ds-btn-quiet\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>Añadir ingrediente</button>",
+      "css": ".ds-btn-quiet{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;background:none;border:0;border-radius:8px;color:#2D6A27;font-family:var(--font-sans, \"Sofia Sans\", system-ui, sans-serif);font-size:16px;font-weight:700;cursor:pointer;} .ds-btn-quiet:active{background:#F3F9EC;} .ds-btn-quiet:focus-visible{outline:2px solid #1D4EB8;outline-offset:2px;}"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "48px field with its condensed label above; green focus, red border when invalid.",
+      "html": "<div class=\"ds-field\"><label for=\"ds-n\">Nombre</label><input id=\"ds-n\" type=\"text\" value=\"Lima\"></div>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:4px;font-family:var(--font-sans, \"Sofia Sans\", system-ui, sans-serif);} .ds-field label{color:#4D555C;font-family:var(--font-condensed, \"Sofia Sans Condensed\", \"Sofia Sans\", \"Arial Narrow\", sans-serif);font-size:13px;font-weight:700;} .ds-field input{min-height:48px;padding:0 12px;background:#FFFFFF;border:1px solid #828B92;border-radius:8px;color:#16191D;font:inherit;font-size:17px;} .ds-field input:focus{outline:2px solid #4C9A2A;outline-offset:1px;border-color:#4C9A2A;} .ds-field input[aria-invalid=\"true\"]{border-color:#C42F27;}"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "refersTo": "tab-bar",
+      "description": "Fixed two-tab bottom bar; the active tab's icon sits on a light green pill.",
+      "html": "<nav class=\"ds-tabs\" aria-label=\"Secciones\"><button class=\"ds-tab\" aria-current=\"page\"><span class=\"ds-tab-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0\"/><path d=\"M12 18v3\"/></svg></span>Nueva ficha</button><button class=\"ds-tab\"><span class=\"ds-tab-icon\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 6h12M9 12h12M9 18h12\"/><path d=\"M4 6h1M4 12h1M4 18h1\"/></svg></span>Preparaciones</button></nav>",
+      "css": ".ds-tabs{display:grid;grid-template-columns:1fr 1fr;max-width:480px;background:#FFFFFF;box-shadow:0 -1px 0 #D5DADD;font-family:var(--font-sans, \"Sofia Sans\", system-ui, sans-serif);} .ds-tab{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:64px;padding:8px 8px 6px;background:transparent;border:0;color:#4D555C;font:inherit;font-size:13px;font-weight:600;cursor:pointer;} .ds-tab:focus-visible{outline:2px solid #1D4EB8;outline-offset:-4px;border-radius:10px;} .ds-tab[aria-current=\"page\"]{color:#16191D;font-weight:800;} .ds-tab-icon{display:flex;padding:2px 16px;border-radius:14px;transition:background-color 120ms cubic-bezier(0.2,0,0,1);} .ds-tab:active .ds-tab-icon{background:#F3F9EC;} .ds-tab[aria-current=\"page\"] .ds-tab-icon{background:#A9E07F;color:#13240F;}"
+    },
+    {
+      "name": "Record Button",
+      "kind": "button",
+      "refersTo": "record-button",
+      "description": "The 148px light green disc to start dictating; becomes the 132px dark stop button while recording.",
+      "html": "<div class=\"ds-rec-row\"><button class=\"ds-rec\"><svg width=\"44\" height=\"44\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0\"/><path d=\"M12 18v3\"/></svg>Grabar</button><button class=\"ds-rec ds-rec-stop\" aria-pressed=\"true\"><span class=\"ds-rec-square\"></span></button></div>",
+      "css": ".ds-rec-row{display:flex;gap:24px;align-items:center;} .ds-rec{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:148px;height:148px;background:#A9E07F;border:0;border-radius:50%;box-shadow:0 2px 4px rgb(22 25 29 / 0.12),0 12px 28px rgb(45 106 39 / 0.25);color:#13240F;font-family:var(--font-sans, \"Sofia Sans\", system-ui, sans-serif);font-size:18px;font-weight:800;cursor:pointer;transition:background-color 120ms cubic-bezier(0.2,0,0,1),transform 120ms cubic-bezier(0.2,0,0,1);} .ds-rec:hover{background:#9FD873;} .ds-rec:active{background:#93CF66;transform:scale(0.97);} .ds-rec:focus-visible{outline:2px solid #1D4EB8;outline-offset:6px;} .ds-rec-stop{width:132px;height:132px;background:#16191D;box-shadow:inset 0 0 0 8px #A9E07F,0 2px 4px rgb(22 25 29 / 0.12),0 12px 28px rgb(45 106 39 / 0.25);} .ds-rec-stop:hover,.ds-rec-stop:active{background:#16191D;} .ds-rec-square{width:34px;height:34px;border-radius:4px;background:#FFFFFF;}"
+    },
+    {
+      "name": "Ingredients Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "White panel of divided sheet rows with an estimated value, a FALTA mark and one line open on the green wash.",
+      "html": "<section class=\"ds-panel\"><div class=\"ds-cols\"><h2>Ingredientes</h2><span>Cantidad</span></div><div class=\"ds-row\"><span>Atún rojo, lomo</span><span>1,6 kg</span></div><div class=\"ds-row\"><span>Sésamo tostado</span><span class=\"ds-est\">≈ 15 g</span></div><div class=\"ds-row ds-open\"><b>Lima</b><span class=\"ds-est\">≈ 3 ud</span></div><div class=\"ds-row\"><span>Cebollino</span><span class=\"ds-missing\">Falta</span></div></section>",
+      "css": ".ds-panel{max-width:366px;background:#FFFFFF;border-radius:10px;box-shadow:0 1px 2px rgb(22 25 29 / 0.06),0 4px 12px rgb(22 25 29 / 0.05);overflow:hidden;font-family:var(--font-sans, \"Sofia Sans\", system-ui, sans-serif);font-size:16px;color:#16191D;font-variant-numeric:tabular-nums lining-nums;} .ds-cols{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px 10px;} .ds-cols h2{margin:0;font-family:var(--font-condensed, \"Sofia Sans Condensed\", \"Sofia Sans\", \"Arial Narrow\", sans-serif);font-size:15px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;} .ds-cols span{color:#4D555C;font-family:var(--font-condensed, \"Sofia Sans Condensed\", \"Sofia Sans\", \"Arial Narrow\", sans-serif);font-size:13px;font-weight:700;} .ds-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;min-height:52px;padding:14px 16px;border-top:1px solid #E1E5E8;} .ds-row:active{background:#F3F9EC;} .ds-open{background:#F3F9EC;} .ds-est{color:#1D4EB8;} .ds-missing{padding:2px 8px;background:#F6DAD6;color:#9E231C;font-family:var(--font-condensed, \"Sofia Sans Condensed\", \"Sofia Sans\", \"Arial Narrow\", sans-serif);font-size:13px;font-weight:800;letter-spacing:0.04em;line-height:1.3;text-transform:uppercase;}"
+    },
+    {
+      "name": "Preparation List Row",
+      "kind": "card",
+      "refersTo": "list-row",
+      "description": "A saved preparation: the name in green at 20px extra-bold, meta in grey with missing data in red.",
+      "html": "<ul class=\"ds-list\"><li><button class=\"ds-item\"><span class=\"ds-name\">Tartar de atún</span><span class=\"ds-meta\">40 raciones · 14 nov 2026, 11:42 · Completa</span></button></li><li><button class=\"ds-item\"><span class=\"ds-name\">Fondo oscuro</span><span class=\"ds-meta\"><span class=\"ds-red\">Raciones: falta</span> · 13 nov 2026, 18:05 · <span class=\"ds-red\">Falta 1 dato</span></span></button></li></ul>",
+      "css": ".ds-list{max-width:366px;margin:0;padding:0;list-style:none;background:#FFFFFF;border-radius:10px;box-shadow:0 1px 2px rgb(22 25 29 / 0.06),0 4px 12px rgb(22 25 29 / 0.05);overflow:hidden;font-family:var(--font-sans, \"Sofia Sans\", system-ui, sans-serif);} .ds-list li+li{border-top:1px solid #E1E5E8;} .ds-item{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;min-height:76px;padding:14px 16px;background:none;border:0;text-align:left;font:inherit;cursor:pointer;} .ds-item:active{background:#F3F9EC;} .ds-item:focus-visible{outline:2px solid #1D4EB8;outline-offset:-2px;} .ds-name{color:#4C9A2A;font-size:20px;font-weight:800;letter-spacing:-0.01em;line-height:1.2;} .ds-meta{color:#4D555C;font-size:14px;} .ds-red{color:#C42F27;font-weight:700;}"
+    },
+    {
+      "name": "Steps Panel",
+      "kind": "custom",
+      "refersTo": "step-row",
+      "description": "Progress of the voice note: done in green, now in red with Ahora, next in grey.",
+      "html": "<ol class=\"ds-steps\"><li class=\"ds-step ds-done\"><span class=\"ds-mark\"></span>Grabar</li><li class=\"ds-step ds-now\"><span class=\"ds-mark\"></span>Transcribiendo…<span class=\"ds-state\">Ahora</span></li><li class=\"ds-step\"><span class=\"ds-mark\"></span>Crear ficha</li></ol>",
+      "css": ".ds-steps{max-width:366px;margin:0;padding:0;list-style:none;background:#FFFFFF;border-radius:10px;box-shadow:0 1px 2px rgb(22 25 29 / 0.06),0 4px 12px rgb(22 25 29 / 0.05);font-family:var(--font-sans, \"Sofia Sans\", system-ui, sans-serif);font-size:16px;} .ds-step{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;border-top:1px solid #E1E5E8;color:#4D555C;} .ds-step:first-child{border-top:0;} .ds-mark{display:flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none;border:2px solid #C9D0D4;border-radius:50%;box-sizing:border-box;} .ds-now{color:#16191D;font-weight:800;} .ds-now .ds-mark{border-color:#C42F27;} .ds-now .ds-mark::after{content:\"\";width:8px;height:8px;border-radius:50%;background:#C42F27;} .ds-done .ds-mark{border-color:#2D6A27;background:#2D6A27;} .ds-done .ds-mark::after{content:\"\";width:9px;height:5px;margin-top:-2px;border-bottom:2px solid #FFFFFF;border-left:2px solid #FFFFFF;transform:rotate(-45deg);} .ds-state{margin-left:auto;color:#C42F27;font-size:14px;font-weight:700;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La cinta de carrocero",
+    "overview": "**Creative North Star: \"La cinta de carrocero\"** (masking tape on the cold-room container)\n\nEvery screen is labelled the way a kitchen labels a container in the cold room: the title on a strip of light green masking tape stuck on slightly crooked, the date in red marker, estimates in blue marker. Everything else is quiet: a very light steel ground, white panels with soft depth, near-black ink, large plain type. The app is a tool the chef opens for a minute on an iPhone, so one calm task fills each screen and the controls are big.\n\nDensity is low and the rhythm is vertical: a title, one or two lines of meta, one white panel of rows, one full-width action. Colour is rationed and every colour means something. Light green is the only primary and always sits under dark text. Blue means \"estimated\" and nothing else in the content. Red means a date, a recording, or something missing. A reader should be able to tell firm numbers from estimates and gaps at a glance, without reading a legend.\n\nThe owner rejected the generic card dashboard of costing apps and the Vite starter look. The app is light only, and stays light when the phone is in dark mode.",
+    "keyCharacteristics": [
+      "Screen titles on a tilted, torn, shadowed strip of light green tape, never a flat band.",
+      "Steel ground, white panels, near-black ink; colour only where it carries meaning.",
+      "Light green as a fill under dark text; green as text only at name size.",
+      "Marker blue with \"≈\" for estimated; marker red for dates, recording and \"FALTA\".",
+      "Sofia Sans for reading, Sofia Sans Condensed uppercase for labels and the tape; tabular figures everywhere.",
+      "Generous touch targets (44 px minimum, 48 px fields, 56 px primary button, 120 px or more for record).",
+      "A centred phone-width column on any screen; a fixed two-tab bottom bar."
+    ],
+    "rules": [
+      {
+        "name": "The Fill-Not-Ink Rule",
+        "body": "Tape Green is a fill under dark text, never a text colour and never a ground for white text. Green as text is Name Green at 20 px extra-bold or larger, or Action Green below that.",
+        "section": "colors"
+      },
+      {
+        "name": "The Marker Rule",
+        "body": "Blue appears in content only as an estimated value with its \"≈\", read as \"(estimado)\". Red appears only for a date, a live recording, something missing, or an error. No decorative blue or red, and no blue links.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Stylesheet Rule",
+        "body": "Raw colours (hex, `rgb(`, `hsl(`) live only in `frontend/src/index.css`. Every other stylesheet uses the custom properties; `frontend/scripts/check-colors.mjs` fails `npm run lint` (and so `make lint` and CI) otherwise. A new colour is a new token in `index.css` first.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "The body sets `font-variant-numeric: tabular-nums lining-nums`, so quantities, dates and the timer align in columns. Never switch it off for numbers.",
+        "section": "typography"
+      },
+      {
+        "name": "The Uppercase-Is-A-Label Rule",
+        "body": "Uppercase Condensed is for things stuck on: the tape, panel headings, the date, \"GRABANDO\", \"FALTA\". Field labels and column headers stay sentence case, Condensed bold, Ink Grey. Body text and names are never uppercase.",
+        "section": "typography"
+      },
+      {
+        "name": "The Phone Column Rule",
+        "body": "Every screen is designed at 390 px and checked at 320 px; on wider screens the column stops at 480 px. Nothing spans the full desktop width.",
+        "section": "layout"
+      },
+      {
+        "name": "The One-Task Rule",
+        "body": "A screen has one title, at most one primary button, and its content in one or two panels. No grids of cards.",
+        "section": "layout"
+      },
+      {
+        "name": "The Filter-Not-Box Rule",
+        "body": "Anything cut by `clip-path` gets its shadow from a `drop-shadow` filter on its parent; a `box-shadow` would be clipped away.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do put every screen's title in `ScreenTitle` on the tape, with the copy in sentence case in the code (the stylesheet uppercases it).",
+      "Do use Tape Green only as a fill under Ink or `on-primary`: primary button, active tab pill, record button and ring, tape, open-line wash (`primary-wash`).",
+      "Do show every estimated value with `EstimatedMark` (\"≈\" in Marker Blue, read as \"(estimado)\"), including future costs and prices.",
+      "Do mark missing data with the \"FALTA\" sticker or red text; never hide it or show a placeholder number.",
+      "Do keep every interactive element at least 44 × 44 px, fields 48 px, primary buttons 56 px, and the record and stop button at least 120 px.",
+      "Do keep a visible focus: the 2 px Focus Blue outline, inset inside panels and on the tape, Name Green on text fields; move focus to where content appears and back when it closes.",
+      "Do announce state changes through `role=\"status\"`, `role=\"alert\"` or a polite live region, and keep ticking values such as the timer out of them.",
+      "Do add new colours, sizes and spacing as tokens in `frontend/src/index.css` first; run `npm run lint`.",
+      "Do build new lists and sheets from the white panel with 52 px divided rows, inset 12 px, text at the 20 px gutter.",
+      "Do keep all copy in Spanish from Spain, addressing the chef as tú."
+    ],
+    "donts": [
+      "Don't put the title on a flat green band or a highlighter stroke; the tape is tilted -1.5°, torn by `clip-path` and shadowed by a filter.",
+      "Don't set green text below 20 px extra-bold in Name Green; use Action Green for smaller green text.",
+      "Don't put white text on Tape Green, or use Tape Green as a text colour.",
+      "Don't use blue for links, decoration or anything but estimates (and the focus ring and checkbox accent); don't use red except for dates, recording, missing data and errors.",
+      "Don't write a raw colour in any stylesheet other than `index.css`; the lint fails.",
+      "Don't add a dark theme or `prefers-color-scheme` rules; the app is light only (`color-scheme: light`).",
+      "Don't load fonts from a font host; add glyphs to the self-hosted subset instead (see `frontend/src/fonts/README.md`).",
+      "Don't lay out a desktop grid or cards side by side; on wide screens the app stays the 480 px column.",
+      "Don't open a modal or bottom sheet to edit a line; edit in place on the Green Wash.",
+      "Don't show a second \"FALTA\" in a row while its line is open; the marks sit under the fields.",
+      "Don't add small uppercase kickers above titles; uppercase Condensed is for panel headings, dates and marks only."
+    ]
+  }
+}
