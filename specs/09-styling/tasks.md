@@ -3,7 +3,7 @@
 Each screen task ends with a screenshot of the running app at 390 px next to its mockup in `docs/design/`, and the differences fixed or written under the task. All tests pass after every task (09-C9).
 
 ## Foundations
-- [ ] Write a test, then add `frontend/scripts/check-colors.mjs` (fails on hex, `rgb(` or `hsl(` in any stylesheet under `frontend/src` except `index.css`) and run it from `npm run lint` after ESLint. It fails on today's code until the screens are restyled, so it is switched on in the last screen task (09-C1)
+- [x] Write a test, then add `frontend/scripts/check-colors.mjs` (fails on hex, `rgb(` or `hsl(` in any stylesheet under `frontend/src` except `index.css`) and run it from `npm run lint` after ESLint. It fails on today's code until the screens are restyled, so it is switched on in the last screen task (09-C1)
 - [ ] With your go-ahead, add Sofia Sans and Sofia Sans Condensed as variable `woff2` files with `OFL.txt` in `frontend/src/fonts/`, and the `@font-face` rules with `font-display: swap` (09-C2)
 - [ ] Rewrite `index.css`: the tokens from the mockups, the base styles (body, buttons, fields, focus ring, text selection, tabular figures) and `.visually-hidden`; remove the Vite template and its unused images; `viewport-fit=cover` and `color-scheme: light` in `index.html`; the manifest colours in `vite.config.ts` (09-C1, 09-C10)
 - [ ] Write tests, then add `ScreenTitle` (the `h1` on the tilted tape) and `EstimatedMark` ("≈" with "estimado" for screen readers) in `frontend/src/ui/` (09-C3, 09-C7)
