@@ -32,7 +32,11 @@ Each screen task ends with a screenshot of the running app at 390 px next to its
   - `npm run lint` now runs the colour check after ESLint, so `make lint` and CI catch raw colours.
 
 ## Checks and finish
-- [ ] Run `impeccable detect` on the changed files and an Impeccable audit of every screen; fix what they find (contrast, touch targets, focus, states) or explain each remaining finding here (09-C4, 09-C6)
+- [x] Run `impeccable detect` on the changed files and an Impeccable audit of every screen; fix what they find (contrast, touch targets, focus, states) or explain each remaining finding here (09-C4, 09-C6)
+  - Done on 2026-11-17: `impeccable detect` on `frontend/src` (no findings) and on the running app at 390×844 in eight states; contrast of every token pair computed; touch targets and overflow measured at 390 and 320 px. Audit score 17/20.
+  - Fixed: the recording timer was inside a live region (read every second); the focus was lost when the sheet replaced the record controls (now it goes to the sheet's name, and back to the record button); the field border from the mockup (#B9C2C7, 1.8:1) is now #828B92 (3:1 or more on white, the wash and the ground); "PREPARACIONES" broke mid-word at 320 px; the "2 kg" button was 35 px wide. The first two have tests.
+  - Kept, with reason: `organic-clip-path` on the title tape: the torn ends are the owner's pinned look and the approved spec, and the tape must grow with two-line names, which a fixed raster cannot. `pulsing-dot` on "GRABANDO": it shows a live microphone, the spec allows motion for the recording indicator, and with reduced motion it stays still. The 24 px checkbox: its whole 48 px label row toggles it.
+  - Left for a later spec: after "Confirmar ficha" the focus lands on the page (the confirm button goes away with the switch to the list; "Ficha guardada" is still announced). It is spec 05's navigation, and this spec changes no behaviour besides the sheet editing. The checking and "No se ha podido comprobar el acceso" screens have no `h1`.
 - [ ] Take screenshots of every screen and state at 390 px into `.impeccable/review/` and run the finish reviewer with the direction contract and the PNGs in `docs/design/`; fix its findings or explain them here (09-C3)
 - [ ] Write `DESIGN.md` and `.impeccable/design.json` with the documenter, from the built app (09-C10)
 - [ ] Deploy and check on the iPhone, recorded here with the date:

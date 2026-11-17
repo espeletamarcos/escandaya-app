@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   confirmPreparation as confirmRequest,
   createDraft as createDraftRequest,
@@ -74,6 +75,18 @@ function RecordScreen({
   const showSheet = voice.step === "done" && voice.sheet !== null && voice.transcript !== null;
   const steps = recording ? 0 : voice.step === "transcribing" ? 1 : voice.step === "structuring" ? 2 : null;
 
+  // The sheet replaces the recording controls, and back: the focused button goes away
+  // with them. Give the focus a place to land, the sheet's name or the record button.
+  const main = useRef<HTMLElement>(null);
+  const sheetShown = useRef(false);
+  useEffect(() => {
+    if (sheetShown.current === showSheet) return;
+    sheetShown.current = showSheet;
+    if (document.activeElement !== document.body) return;
+    const target = showSheet ? '[data-line="name"]' : ".record-button";
+    main.current?.querySelector<HTMLElement>(target)?.focus();
+  }, [showSheet]);
+
   const recordButton = (
     <button
       type="button"
@@ -133,13 +146,13 @@ function RecordScreen({
         </p>
       )}
       {voice.step === "no-voice" && (
-        <div className="voice-sheet-notice panel">
+        <div role="status" className="voice-sheet-notice panel">
           <p className="voice-sheet-notice-title">No se ha detectado voz</p>
           <p>Graba de nuevo, más cerca del micrófono.</p>
         </div>
       )}
       {voice.step === "not-preparation" && (
-        <div className="voice-sheet-notice panel">
+        <div role="status" className="voice-sheet-notice panel">
           <p className="voice-sheet-notice-title">No parece una preparación</p>
           <p>Graba de nuevo con el nombre, cuánto sale y qué lleva.</p>
         </div>
@@ -151,7 +164,7 @@ function RecordScreen({
   // recording stays below it, to listen to it again or record a new one.
   if (showSheet && voice.sheet && voice.transcript !== null) {
     return (
-      <main className="record-screen with-sheet">
+      <main ref={main} className="record-screen with-sheet">
         <DraftSheet
           key={voice.draftId}
           sheet={voice.sheet}
@@ -176,9 +189,9 @@ function RecordScreen({
   }
 
   return (
-    <main className="record-screen">
+    <main ref={main} className="record-screen">
       <ScreenTitle>Nueva ficha</ScreenTitle>
-      <section className="record-stage" aria-live="polite">
+      <section className="record-stage">
         {recording && (
           <div className="record-live">
             <p className="record-live-label">
@@ -207,7 +220,8 @@ function RecordScreen({
         {audio && messages}
         {transcribeButton}
       </section>
-      {steps !== null && <Steps current={steps} />}
+      {/* Announces each step; the timer stays out of it, or it would be read every second. */}
+      <div aria-live="polite">{steps !== null && <Steps current={steps} />}</div>
     </main>
   );
 }

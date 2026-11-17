@@ -279,8 +279,10 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
                 coversText
               )}
             </button>
-            <span aria-hidden="true">·</span>
-            <span className="sheet-unconfirmed">sin confirmar</span>
+            {/* The dot travels with "sin confirmar", so a wrapped line never ends in one. */}
+            <span className="sheet-unconfirmed">
+              <span aria-hidden="true">· </span>sin confirmar
+            </span>
           </p>
           <time className="sheet-date" dateTime={createdAt}>
             {formatDay(createdAt)}

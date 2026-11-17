@@ -20,7 +20,8 @@
   font-weight: var(--weight-heavy);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  overflow-wrap: anywhere;
+  /* Break a word only when it cannot fit on a line by itself. */
+  overflow-wrap: break-word;
   transform: rotate(-1.5deg);
   transform-origin: left center;
   clip-path: polygon(

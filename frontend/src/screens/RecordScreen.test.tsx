@@ -169,6 +169,15 @@ describe("RecordScreen", () => {
       expect(screen.queryByText("Creando ficha…")).toBeNull();
     });
 
+    it("gives the focus to the sheet's name when the sheet replaces the buttons (09-C7)", async () => {
+      renderScreen();
+      await record();
+      fireEvent.click(button());
+      await screen.findByRole("form", { name: "Ficha" });
+
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: /^Editar nombre/ }));
+    });
+
     it("never shows the transcript (04-C5)", async () => {
       renderScreen();
       await record();
@@ -429,6 +438,13 @@ describe("RecordScreen", () => {
 
       await advance(45_000);
       expect(screen.getByRole("timer").textContent).toBe("0:45 / 2:00");
+    });
+
+    it("keeps the timer out of any live region, so it is not read every second (09-C7)", async () => {
+      renderWithFakes();
+      await click("Grabar");
+
+      expect(screen.getByRole("timer").closest("[aria-live]")).toBeNull();
     });
 
     it("hides the timer when not recording", async () => {

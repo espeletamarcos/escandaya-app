@@ -30,12 +30,13 @@
 }
 
 .sheet-meta-button {
+  min-width: var(--touch);
   min-height: var(--touch);
   padding: 0 2px;
   background: none;
   border: 0;
   border-radius: var(--radius-field);
-  text-align: left;
+  text-align: center;
 
   &[aria-expanded="true"] {
     text-decoration: underline 2px var(--primary);
@@ -49,6 +50,7 @@
 
 .sheet-unconfirmed {
   color: var(--ink-2);
+  white-space: nowrap;
   font-weight: var(--weight-regular);
 }
 
