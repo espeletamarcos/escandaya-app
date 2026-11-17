@@ -10,7 +10,7 @@
 
 .sheet-meta {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
 }
@@ -18,8 +18,8 @@
 .sheet-meta-values {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  column-gap: var(--space-1);
+  align-items: baseline;
+  column-gap: 6px;
   font-size: var(--text-lead);
   font-weight: var(--weight-medium);
 }
@@ -129,11 +129,14 @@
 
   & + div::before {
     content: "·" / "";
-    margin-right: var(--space-1);
+    margin-right: 6px;
   }
 }
 
-.sheet-confirmed {
+.sheet-confirmed,
+.sheet-status {
+  /* The 44px tap height of the line above leaves room enough. */
+  margin-top: calc(var(--space-2) * -1);
   color: var(--ink-2);
   font-size: var(--text-small);
 }

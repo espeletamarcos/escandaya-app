@@ -26,7 +26,7 @@ function PreparationScreen({ id, getPreparation = getRequest, onBack }: Preparat
           <span className="visually-hidden">Volver a</span> Preparaciones
         </button>
       </div>
-      {preparation.status === "loading" && <p className="screen-status">Cargando…</p>}
+      {preparation.status === "loading" && <p className="screen-status panel">Cargando…</p>}
       {preparation.status === "error" && (
         <div className="screen-problem panel">
           <p role="alert" className="message-error">

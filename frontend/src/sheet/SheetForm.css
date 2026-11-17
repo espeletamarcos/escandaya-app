@@ -30,13 +30,24 @@
 }
 
 .sheet-meta-button {
-  min-width: var(--touch);
+  position: relative;
   min-height: var(--touch);
-  padding: 0 2px;
+  padding: 0;
   background: none;
   border: 0;
   border-radius: var(--radius-field);
-  text-align: center;
+  text-align: start;
+
+  /* A short value such as "2 kg" is narrower than a finger: the tap area grows to
+     44px around it without moving the text. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto;
+    left: 50%;
+    width: max(100%, var(--touch));
+    transform: translateX(-50%);
+  }
 
   &[aria-expanded="true"] {
     text-decoration: underline 2px var(--primary);
@@ -48,11 +59,6 @@
   }
 }
 
-.sheet-unconfirmed {
-  color: var(--ink-2);
-  white-space: nowrap;
-  font-weight: var(--weight-regular);
-}
 
 .sheet-line-button {
   width: 100%;

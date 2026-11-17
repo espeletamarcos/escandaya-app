@@ -8,6 +8,16 @@
   font-size: var(--text-title);
   line-height: 1.1;
   filter: var(--shadow-tape);
+
+  /* A long name: a smaller tape that stops short of the edge, so it stays a strip. */
+  &.long {
+    width: 100%;
+    font-size: var(--text-title-long);
+
+    .screen-title-tape {
+      max-width: 90%;
+    }
+  }
 }
 
 .screen-title-tape {

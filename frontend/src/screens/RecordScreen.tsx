@@ -73,7 +73,13 @@ function RecordScreen({
   };
 
   const showSheet = voice.step === "done" && voice.sheet !== null && voice.transcript !== null;
-  const steps = recording ? 0 : voice.step === "transcribing" ? 1 : voice.step === "structuring" ? 2 : null;
+  const steps = recording
+    ? 0
+    : voice.step === "transcribing"
+      ? 1
+      : voice.step === "structuring"
+        ? 2
+        : null;
 
   // The sheet replaces the recording controls, and back: the focused button goes away
   // with them. Give the focus a place to land, the sheet's name or the record button.
@@ -108,7 +114,7 @@ function RecordScreen({
         </>
       ) : (
         <>
-          <MicrophoneIcon size={showSheet ? 24 : 44} />
+          <MicrophoneIcon size={showSheet ? 24 : audio ? 36 : 44} />
           Grabar
         </>
       )}
@@ -118,7 +124,9 @@ function RecordScreen({
   const transcribeButton = audio && !recording && (
     <button
       type="button"
-      className={showSheet ? "voice-sheet-button button-quiet" : "voice-sheet-button button-primary"}
+      className={
+        showSheet ? "voice-sheet-button voice-sheet-done" : "voice-sheet-button button-primary"
+      }
       disabled={pending || finished}
       onClick={() => void voice.run(audio)}
     >
@@ -177,11 +185,10 @@ function RecordScreen({
             Grabación
           </h2>
           {audioUrl && <audio controls src={audioUrl} />}
+          {/* Spent: it reads as a done step, not as a second action next to "Grabar". */}
+          {transcribeButton}
           <p className="record-again-hint">Si grabas de nuevo, esta ficha se descarta.</p>
-          <div className="record-again-actions">
-            {recordButton}
-            {transcribeButton}
-          </div>
+          <div className="record-again-actions">{recordButton}</div>
         </section>
         {messages}
       </main>
@@ -200,7 +207,10 @@ function RecordScreen({
             </p>
             <p role="timer" className="record-timer">
               {formatDuration(elapsed)}
-              <span className="record-timer-limit"> / {formatDuration(MAX_RECORDING_MS / 1000)}</span>
+              <span className="record-timer-limit">
+                {" "}
+                / {formatDuration(MAX_RECORDING_MS / 1000)}
+              </span>
             </p>
           </div>
         )}
@@ -208,7 +218,9 @@ function RecordScreen({
         {!audio && messages}
         {!audio && (
           <div className="record-hints">
-            <p className="record-hint">Di el nombre, cuánto sale, para cuántas raciones y qué lleva.</p>
+            <p className="record-hint">
+              Di el nombre, cuánto sale, para cuántas raciones y qué lleva.
+            </p>
             {!recording && (
               <p className="record-example">
                 Por ejemplo: «Hago dos kilos de tartar de atún para unas cuarenta raciones…»

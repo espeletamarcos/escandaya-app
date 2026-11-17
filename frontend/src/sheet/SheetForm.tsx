@@ -2,6 +2,7 @@ import { type ReactNode, type Ref, useEffect, useId, useReducer, useRef, useStat
 import { formatDay } from "../preparations/format";
 import EstimatedMark from "../ui/EstimatedMark";
 import { PlusIcon } from "../ui/icons";
+import { isLongTitle } from "../ui/titleLength";
 import "../ui/ScreenTitle.css";
 import { Amount, Missing } from "./Amount";
 import { NUMBER } from "./numbers";
@@ -214,7 +215,11 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
       onSubmit={(event) => event.preventDefault()}
     >
       <header className="sheet-header">
-        <h1 className="screen-title sheet-title">
+        <h1
+          className={
+            isLongTitle(values.name) ? "screen-title sheet-title long" : "screen-title sheet-title"
+          }
+        >
           <button
             type="button"
             {...lineState("name")}
@@ -224,7 +229,14 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
             <span className="visually-hidden">Editar nombre:</span>{" "}
             {missing.has("name") ? (
               <>
-                <span className="sheet-unnamed">Sin nombre</span> <Missing />
+                {/* While open, the field below carries the mark: one "Falta" per value. */}
+                <span className="sheet-unnamed">Sin nombre</span>
+                {open !== "name" && (
+                  <>
+                    {" "}
+                    <Missing />
+                  </>
+                )}
               </>
             ) : (
               values.name
@@ -255,7 +267,13 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
               <span className="visually-hidden">Editar rendimiento:</span>{" "}
               {missing.has("yield.quantity") && missing.has("yield.unit") ? (
                 <>
-                  Rendimiento <Missing />
+                  Rendimiento
+                  {open !== "yield" && (
+                    <>
+                      {" "}
+                      <Missing />
+                    </>
+                  )}
                 </>
               ) : (
                 <Amount {...values.yield} path="yield" missing={missing} />
@@ -271,7 +289,13 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
               <span className="visually-hidden">Editar raciones:</span>{" "}
               {missing.has("covers") ? (
                 <>
-                  Raciones <Missing />
+                  Raciones
+                  {open !== "covers" && (
+                    <>
+                      {" "}
+                      <Missing />
+                    </>
+                  )}
                 </>
               ) : values.covers.estimated ? (
                 <EstimatedMark>{coversText}</EstimatedMark>
@@ -279,15 +303,13 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
                 coversText
               )}
             </button>
-            {/* The dot travels with "sin confirmar", so a wrapped line never ends in one. */}
-            <span className="sheet-unconfirmed">
-              <span aria-hidden="true">· </span>sin confirmar
-            </span>
           </p>
           <time className="sheet-date" dateTime={createdAt}>
             {formatDay(createdAt)}
           </time>
         </div>
+        {/* Where the saved sheet says "Confirmada el …". */}
+        <p className="sheet-status">Sin confirmar</p>
         {open === "yield" && (
           <Editor id={editorId("yield")} legend="Rendimiento" onDone={close}>
             <div className="sheet-amount-fields">
@@ -354,14 +376,24 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
                     <span className="visually-hidden">Editar</span>{" "}
                     {missing.has(`${path}.name`) ? (
                       <>
-                        <span className="sheet-unnamed">Sin nombre</span> <Missing />
+                        <span className="sheet-unnamed">Sin nombre</span>
+                        {!isOpen && (
+                          <>
+                            {" "}
+                            <Missing />
+                          </>
+                        )}
                       </>
                     ) : (
                       values.ingredients[index].name
                     )}
                   </span>{" "}
                   <span className="sheet-line-amount">
-                    <Amount {...values.ingredients[index]} path={path} missing={missing} />
+                    {/* While open, the fields below carry the marks: one "Falta" per value. */}
+                    {!(
+                      isOpen &&
+                      (missing.has(`${path}.quantity`) || missing.has(`${path}.unit`))
+                    ) && <Amount {...values.ingredients[index]} path={path} missing={missing} />}
                   </span>
                 </button>
                 {isOpen && (

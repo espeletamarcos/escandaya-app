@@ -308,6 +308,15 @@ describe("adding and deleting (09-C8)", () => {
     ]);
   });
 
+  it("marks each missing value once while its line is open: under its field, not in the line", () => {
+    renderForm();
+    fireEvent.click(addButton());
+
+    const openLine = ingredient(3).closest("li") as HTMLElement;
+    expect(openLine.querySelectorAll(".sheet-missing")).toHaveLength(3);
+    expect(line("Sin nombre").querySelector(".sheet-missing")).toBeNull();
+  });
+
   it("keeps an empty line findable once closed, with its marks", () => {
     renderForm();
     fireEvent.click(addButton());

@@ -40,7 +40,7 @@ function PreparationsScreen({
           {notice}
         </p>
       )}
-      {list.status === "loading" && <p className="screen-status">Cargando…</p>}
+      {list.status === "loading" && <p className="screen-status panel">Cargando…</p>}
       {list.status === "error" && (
         <div className="screen-problem panel">
           <p role="alert" className="message-error">

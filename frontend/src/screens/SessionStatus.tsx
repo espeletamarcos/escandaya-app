@@ -1,9 +1,11 @@
+import ScreenTitle from "../ui/ScreenTitle";
 import "./AccessScreen.css";
 
 /** Shown while the stored token is being checked, so no other screen flashes first. */
 export function CheckingScreen() {
   return (
     <main className="access-screen">
+      <ScreenTitle>Escandaya</ScreenTitle>
       <p role="status" className="access-lead">
         Comprobando acceso…
       </p>
@@ -15,6 +17,7 @@ export function CheckingScreen() {
 export function UnavailableScreen({ onRetry }: { onRetry: () => void }) {
   return (
     <main className="access-screen">
+      <ScreenTitle>Escandaya</ScreenTitle>
       <p role="alert" className="access-problem">
         No se ha podido comprobar el acceso
       </p>

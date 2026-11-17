@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { isLongTitle } from "./titleLength";
 import "./ScreenTitle.css";
 
 /**
@@ -7,8 +8,9 @@ import "./ScreenTitle.css";
  * the stylesheet; a long name wraps and the tape grows with it.
  */
 function ScreenTitle({ children }: { children: ReactNode }) {
+  const long = typeof children === "string" && isLongTitle(children);
   return (
-    <h1 className="screen-title">
+    <h1 className={long ? "screen-title long" : "screen-title"}>
       <span className="screen-title-tape">{children}</span>
     </h1>
   );

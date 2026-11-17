@@ -10,3 +10,7 @@
 .preparation-screen .sheet-header {
   padding-top: var(--space-2);
 }
+
+.preparation-screen > .panel {
+  margin-top: var(--space-4);
+}

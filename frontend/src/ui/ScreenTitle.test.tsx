@@ -20,10 +20,17 @@ describe("ScreenTitle (09-C3)", () => {
     expect(heading.querySelector(".screen-title-tape")?.textContent).toBe("Tartar de atún");
   });
 
-  it("keeps a long name whole, to wrap on the tape", () => {
+  it("keeps a long name whole, on a smaller tape so it does not become a slab", () => {
     const name = "Pichón en dos cocciones con su jugo y remolacha asada a la sal";
     render(<ScreenTitle>{name}</ScreenTitle>);
 
-    expect(screen.getByRole("heading", { level: 1, name })).toBeDefined();
+    const heading = screen.getByRole("heading", { level: 1, name });
+    expect(heading.classList.contains("long")).toBe(true);
+  });
+
+  it("keeps the full-size tape for a usual name", () => {
+    render(<ScreenTitle>Preparaciones</ScreenTitle>);
+
+    expect(screen.getByRole("heading", { level: 1 }).classList.contains("long")).toBe(false);
   });
 });
