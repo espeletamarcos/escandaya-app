@@ -307,5 +307,10 @@
 
   .voice-sheet-button:disabled {
     color: var(--ink-2);
+    font-weight: var(--weight-medium);
+
+    svg {
+      color: var(--green-action);
+    }
   }
 }

@@ -19,3 +19,10 @@ export function formatDate(iso: string, timeZone?: string): string {
     new Date(iso),
   );
 }
+
+/** The day only, such as "14 nov": the date in red marker on sheets and in the list. */
+export function formatDay(iso: string, timeZone?: string): string {
+  return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", timeZone }).format(
+    new Date(iso),
+  );
+}

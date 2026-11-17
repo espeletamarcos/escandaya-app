@@ -11,7 +11,7 @@ import SheetForm from "../sheet/SheetForm";
 import type { Sheet } from "../sheet/types";
 import { type CreateDraftFn, type TranscribeFn, useVoiceSheet } from "../sheet/useVoiceSheet";
 import ScreenTitle from "../ui/ScreenTitle";
-import { MicrophoneIcon } from "../ui/icons";
+import { CheckIcon, MicrophoneIcon } from "../ui/icons";
 import "./RecordScreen.css";
 
 interface DraftSheetProps {
@@ -109,6 +109,8 @@ function RecordScreen({
       disabled={pending || finished}
       onClick={() => void voice.run(audio)}
     >
+      {/* Under the sheet the step is done: the check says so. */}
+      {showSheet && <CheckIcon />}
       Transcribir y crear ficha
     </button>
   );

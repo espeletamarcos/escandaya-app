@@ -48,3 +48,11 @@ export function BackIcon() {
     </svg>
   );
 }
+
+export function CheckIcon() {
+  return (
+    <svg {...LINE} width={18} height={18} strokeWidth={2.25}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  );
+}

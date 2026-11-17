@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import EstimatedMark from "../ui/EstimatedMark";
 import { NUMBER } from "./numbers";
 import type { Unit } from "./types";
+import "./Amount.css";
 
 /** The "Falta" mark, in marker red. An `id` links it to its field for screen readers. */
 export function Missing({ children = "Falta", id }: { children?: ReactNode; id?: string }) {

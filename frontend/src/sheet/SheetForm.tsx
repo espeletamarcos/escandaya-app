@@ -1,5 +1,8 @@
 import { type ReactNode, type Ref, useEffect, useId, useReducer, useRef, useState } from "react";
+import { formatDay } from "../preparations/format";
 import EstimatedMark from "../ui/EstimatedMark";
+import { PlusIcon } from "../ui/icons";
+import "../ui/ScreenTitle.css";
 import { Amount, Missing } from "./Amount";
 import { NUMBER } from "./numbers";
 import {
@@ -139,6 +142,8 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
   const allowed = canConfirm(editable);
   const values = toSheet(editable);
   const formId = useId();
+  // The day the sheet was made, in red marker like the label on a container.
+  const [createdAt] = useState(() => new Date().toISOString());
 
   const form = useRef<HTMLFormElement>(null);
   const firstField = useRef<HTMLInputElement>(null);
@@ -276,6 +281,9 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
             <span aria-hidden="true">·</span>
             <span className="sheet-unconfirmed">sin confirmar</span>
           </p>
+          <time className="sheet-date" dateTime={createdAt}>
+            {formatDay(createdAt)}
+          </time>
         </div>
         {open === "yield" && (
           <Editor id={editorId("yield")} legend="Rendimiento" onDone={close}>
@@ -419,19 +427,28 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
           })}
         </ul>
         <button ref={addButton} type="button" className="sheet-add" onClick={add}>
+          <PlusIcon />
           Añadir ingrediente
         </button>
       </section>
+
+      <p className="sheet-legend">
+        <span className="estimated">≈ en azul</span>: estimado. Toca una línea para corregirla.
+      </p>
 
       {!allowed && (
         <p className="sheet-hint">
           Escribe el nombre de la preparación y de cada ingrediente para confirmar.
         </p>
       )}
-      {confirmError && <p role="alert">{confirmError}</p>}
+      {confirmError && (
+        <p role="alert" className="message-error sheet-error">
+          {confirmError}
+        </p>
+      )}
       <button
         type="button"
-        className="sheet-confirm"
+        className="button-primary sheet-confirm"
         disabled={confirming || !allowed}
         onClick={() => onConfirm(toSheet(editable))}
       >

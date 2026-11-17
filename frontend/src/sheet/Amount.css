@@ -1,0 +1,14 @@
+/* "FALTA": a small red label on a pale red ground, like a sticker on the line. */
+.sheet-missing {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  background: var(--missing-bg);
+  color: var(--missing-ink);
+  font-family: var(--font-condensed);
+  font-size: var(--text-label);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-label);
+  line-height: 1.3;
+  text-transform: uppercase;
+  vertical-align: 0.1em;
+}
