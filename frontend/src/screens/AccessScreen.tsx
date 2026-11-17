@@ -1,5 +1,6 @@
 import { type SubmitEvent, useState } from "react";
 import { parseTokenInput } from "../auth/token";
+import ScreenTitle from "../ui/ScreenTitle";
 import "./AccessScreen.css";
 
 interface AccessScreenProps {
@@ -33,8 +34,8 @@ function AccessScreen({ onToken, rejected = false, checking = false }: AccessScr
 
   return (
     <main className="access-screen">
-      <h1>Acceso privado</h1>
-      <p>Para usar Escandaya, abre la app desde tu enlace privado.</p>
+      <ScreenTitle>Acceso privado</ScreenTitle>
+      <p className="access-lead">Para usar Escandaya, abre la app desde tu enlace privado.</p>
       <form className="access-form" onSubmit={submit}>
         <label htmlFor="access-input">Enlace o código de acceso</label>
         <input
@@ -51,11 +52,15 @@ function AccessScreen({ onToken, rejected = false, checking = false }: AccessScr
             setUnreadable(false);
           }}
         />
-        <button type="submit" disabled={checking}>
+        <button type="submit" className="button-primary" disabled={checking}>
           {checking ? "Comprobando…" : "Entrar"}
         </button>
+        {message && (
+          <p role="alert" className="message-error">
+            {message}
+          </p>
+        )}
       </form>
-      {message && <p role="alert">{message}</p>}
     </main>
   );
 }

@@ -4,7 +4,9 @@ import "./AccessScreen.css";
 export function CheckingScreen() {
   return (
     <main className="access-screen">
-      <p role="status">Comprobando acceso…</p>
+      <p role="status" className="access-lead">
+        Comprobando acceso…
+      </p>
     </main>
   );
 }
@@ -13,9 +15,11 @@ export function CheckingScreen() {
 export function UnavailableScreen({ onRetry }: { onRetry: () => void }) {
   return (
     <main className="access-screen">
-      <p role="alert">No se ha podido comprobar el acceso</p>
-      <p>Revisa la conexión e inténtalo de nuevo.</p>
-      <button type="button" onClick={onRetry}>
+      <p role="alert" className="access-problem">
+        No se ha podido comprobar el acceso
+      </p>
+      <p className="access-lead">Revisa la conexión e inténtalo de nuevo.</p>
+      <button type="button" className="button-primary" onClick={onRetry}>
         Reintentar
       </button>
     </main>

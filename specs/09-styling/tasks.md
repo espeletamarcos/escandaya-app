@@ -13,7 +13,8 @@ Each screen task ends with a screenshot of the running app at 390 px next to its
   - Compared with `5-preparaciones`: same bar, pill and labels. The mockup is 84 px tall because it includes the home indicator; the app has 64 px plus `env(safe-area-inset-bottom)`. The bar moved after the content so the focus order follows the screen, and it hides while a text field or select has focus (iOS keyboard). The icons are in `frontend/src/ui/icons.tsx`.
 
 ## Screens
-- [ ] Access screen (Screens 7): title on tape, the token field and the primary button, the error (09-C3, 09-C7)
+- [x] Access screen (Screens 7): title on tape, the token field and the primary button, the error (09-C3, 09-C7)
+  - No mockup: built from the fields and the primary button of screen 4. The checking and "No se ha podido comprobar el acceso" screens share its stylesheet and got the same look; the second has no title, its problem is its first line.
 - [ ] Record screen at rest and recording (Screens 1 and 2, `1-nueva-ficha`, `2-grabando`): the 148 px record button, "GRABANDO" with the timer and the stop button, the steps panel for recording, transcribing and creating the sheet, the notices and errors (09-C3, 09-C4, 09-C7)
 - [ ] Write the 09-C8 tests, then change `SheetForm` to edit by line: the open-line state, closed lines as buttons with `aria-expanded`, "Listo", one line open at a time, focus on open, close, add and delete, and the name, yield and covers in the header opening the same way. No styling yet (09-C8)
 - [ ] Style the draft sheet and its open line (Screens 3 and 4, `3-ficha-sin-confirmar`, `4-ficha-linea-abierta`): title on tape, yield and covers, the date, the ingredients panel with "≈" and "FALTA", the open line with its 48 px fields, "Eliminar" and "Listo", the hint, the error and "Confirmar ficha" (09-C3, 09-C4, 09-C7)

@@ -1,77 +1,43 @@
+/* The access screen and the session checks before it: no tab bar, one column. */
 .access-screen {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 48px 16px;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  box-sizing: border-box;
+  align-items: flex-start;
+  gap: var(--space-5);
+  min-height: 100svh;
+  padding: var(--space-6) var(--gutter) calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
 
-  h1 {
-    margin: 0;
-    color: var(--text-h);
-    font-size: 28px;
+  .button-primary {
+    width: 100%;
   }
+}
 
-  p {
-    margin: 0;
-  }
+.access-lead {
+  max-width: 34ch;
+  color: var(--ink-2);
+  font-size: var(--text-lead);
+  line-height: 1.45;
+}
 
-  button {
-    min-height: 48px;
-    padding: 0 24px;
-    border-radius: 8px;
-    border: 2px solid var(--accent-border);
-    background: var(--accent-bg);
-    color: var(--text-h);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-  }
-
-  [role="alert"] {
-    color: #dc2626;
-  }
+/* The unavailable screen has no title: its problem is the first line. */
+.access-problem {
+  font-size: var(--text-name);
+  font-weight: var(--weight-heavy);
+  line-height: 1.2;
 }
 
 .access-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
   width: 100%;
-  text-align: left;
+  margin-top: var(--space-2);
 
   label {
-    color: var(--text-h);
-    font-weight: 600;
-  }
-
-  input {
-    min-height: 48px;
-    padding: 0 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text-h);
-    /* 16px or more stops iOS Safari from zooming in on focus. */
-    font: inherit;
-    font-size: max(16px, 1em);
-
-    &:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 1px;
-    }
+    margin-bottom: calc(var(--space-2) * -1);
+    color: var(--ink-2);
+    font-family: var(--font-condensed);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
   }
 }
