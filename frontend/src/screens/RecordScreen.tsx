@@ -10,6 +10,8 @@ import { formatDuration, MAX_RECORDING_MS, useRecorder } from "../recorder/useRe
 import SheetForm from "../sheet/SheetForm";
 import type { Sheet } from "../sheet/types";
 import { type CreateDraftFn, type TranscribeFn, useVoiceSheet } from "../sheet/useVoiceSheet";
+import ScreenTitle from "../ui/ScreenTitle";
+import { MicrophoneIcon } from "../ui/icons";
 import "./RecordScreen.css";
 
 interface DraftSheetProps {
@@ -69,63 +71,167 @@ function RecordScreen({
     void toggle();
   };
 
-  return (
-    <main className="record-screen">
-      <button
-        type="button"
-        className={recording ? "record-button recording" : "record-button"}
-        aria-pressed={recording}
-        onClick={onRecordClick}
-      >
-        {recording ? "Parar" : "Grabar"}
-      </button>
-      {recording && (
+  const showSheet = voice.step === "done" && voice.sheet !== null && voice.transcript !== null;
+  const steps = recording ? 0 : voice.step === "transcribing" ? 1 : voice.step === "structuring" ? 2 : null;
+
+  const recordButton = (
+    <button
+      type="button"
+      className={[
+        "record-button",
+        recording && "recording",
+        audio && !recording && "again",
+        showSheet && "compact",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-pressed={recording}
+      onClick={onRecordClick}
+    >
+      {recording ? (
         <>
-          <p>Grabando…</p>
-          <p role="timer" className="record-timer">
-            {formatDuration(elapsed)} / {formatDuration(MAX_RECORDING_MS / 1000)}
-          </p>
+          <span className="record-stop" aria-hidden="true" />
+          <span className="visually-hidden">Parar</span>
+        </>
+      ) : (
+        <>
+          <MicrophoneIcon size={showSheet ? 24 : 44} />
+          Grabar
         </>
       )}
-      {error && <p role="alert">{error}</p>}
-      {audioUrl && <audio controls src={audioUrl} />}
+    </button>
+  );
+
+  const transcribeButton = audio && !recording && (
+    <button
+      type="button"
+      className={showSheet ? "voice-sheet-button button-quiet" : "voice-sheet-button button-primary"}
+      disabled={pending || finished}
+      onClick={() => void voice.run(audio)}
+    >
+      Transcribir y crear ficha
+    </button>
+  );
+
+  const messages = (
+    <>
+      {error && (
+        <p role="alert" className="message-error record-message">
+          {error}
+        </p>
+      )}
       {notice && (
         <p role="status" className="record-notice">
           {notice}
         </p>
       )}
-      {audio && !recording && (
-        <section className="voice-sheet" aria-live="polite">
-          <button
-            type="button"
-            className="voice-sheet-button"
-            disabled={pending || finished}
-            onClick={() => void voice.run(audio)}
-          >
-            Transcribir y crear ficha
-          </button>
-          {voice.step === "transcribing" && <p>Transcribiendo…</p>}
-          {voice.step === "structuring" && <p>Creando ficha…</p>}
-          {voice.error && <p role="alert">{voice.error}</p>}
-          {voice.step === "no-voice" && (
-            <p className="voice-sheet-notice">No se ha detectado voz</p>
-          )}
-          {voice.step === "not-preparation" && (
-            <p className="voice-sheet-notice">No parece una preparación</p>
-          )}
-          {/* The transcript is never shown: the chef sees the sheet (04-C5). */}
-          {voice.step === "done" && voice.sheet && voice.transcript !== null && (
-            <DraftSheet
-              key={voice.draftId}
-              sheet={voice.sheet}
-              transcript={voice.transcript}
-              confirmPreparation={confirmPreparation}
-              onSaved={onSaved}
-            />
-          )}
-        </section>
+      {voice.error && (
+        <p role="alert" className="message-error record-message">
+          {voice.error}
+        </p>
       )}
+      {voice.step === "no-voice" && (
+        <div className="voice-sheet-notice panel">
+          <p className="voice-sheet-notice-title">No se ha detectado voz</p>
+          <p>Graba de nuevo, más cerca del micrófono.</p>
+        </div>
+      )}
+      {voice.step === "not-preparation" && (
+        <div className="voice-sheet-notice panel">
+          <p className="voice-sheet-notice-title">No parece una preparación</p>
+          <p>Graba de nuevo con el nombre, cuánto sale y qué lleva.</p>
+        </div>
+      )}
+    </>
+  );
+
+  // With a sheet on screen, the sheet comes first: it is what the chef checks. The
+  // recording stays below it, to listen to it again or record a new one.
+  if (showSheet && voice.sheet && voice.transcript !== null) {
+    return (
+      <main className="record-screen with-sheet">
+        <DraftSheet
+          key={voice.draftId}
+          sheet={voice.sheet}
+          transcript={voice.transcript}
+          confirmPreparation={confirmPreparation}
+          onSaved={onSaved}
+        />
+        <section className="record-again panel" aria-labelledby="record-again-title">
+          <h2 id="record-again-title" className="record-again-title">
+            Grabación
+          </h2>
+          {audioUrl && <audio controls src={audioUrl} />}
+          <p className="record-again-hint">Si grabas de nuevo, esta ficha se descarta.</p>
+          <div className="record-again-actions">
+            {recordButton}
+            {transcribeButton}
+          </div>
+        </section>
+        {messages}
+      </main>
+    );
+  }
+
+  return (
+    <main className="record-screen">
+      <ScreenTitle>Nueva ficha</ScreenTitle>
+      <section className="record-stage" aria-live="polite">
+        {recording && (
+          <div className="record-live">
+            <p className="record-live-label">
+              <span className="record-dot" aria-hidden="true" />
+              Grabando
+            </p>
+            <p role="timer" className="record-timer">
+              {formatDuration(elapsed)}
+              <span className="record-timer-limit"> / {formatDuration(MAX_RECORDING_MS / 1000)}</span>
+            </p>
+          </div>
+        )}
+        {recordButton}
+        {!audio && messages}
+        {!audio && (
+          <div className="record-hints">
+            <p className="record-hint">Di el nombre, cuánto sale, para cuántas raciones y qué lleva.</p>
+            {!recording && (
+              <p className="record-example">
+                Por ejemplo: «Hago dos kilos de tartar de atún para unas cuarenta raciones…»
+              </p>
+            )}
+          </div>
+        )}
+        {audioUrl && !recording && <audio controls src={audioUrl} />}
+        {audio && messages}
+        {transcribeButton}
+      </section>
+      {steps !== null && <Steps current={steps} />}
     </main>
+  );
+}
+
+const STEPS = [
+  { label: "Grabar", now: "Grabando…" },
+  { label: "Transcribir", now: "Transcribiendo…" },
+  { label: "Crear ficha", now: "Creando ficha…" },
+];
+
+/** Where the voice note is: recording, transcribing, or creating the sheet. */
+function Steps({ current }: { current: number }) {
+  return (
+    <ol className="record-steps panel" aria-label="Pasos">
+      {STEPS.map((step, index) => {
+        const state = index < current ? "done" : index === current ? "now" : "next";
+        return (
+          <li key={step.label} className={`record-step ${state}`}>
+            <span className="record-step-mark" aria-hidden="true" />
+            {state === "now" ? step.now : step.label}
+            {state === "now" && <span className="record-step-state">Ahora</span>}
+            {state === "done" && <span className="visually-hidden">(hecho)</span>}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

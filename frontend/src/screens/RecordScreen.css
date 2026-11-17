@@ -1,92 +1,311 @@
+/* The record screen: at rest, recording, transcribing and creating the sheet. */
 .record-screen {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  padding: 48px 16px;
-}
+  gap: var(--space-9);
+  padding: var(--space-6) 0 0;
 
-.record-button {
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  border: 4px solid var(--accent-border);
-  background: var(--accent-bg);
-  color: var(--text-h);
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 4px;
+  > .screen-title {
+    padding: 0 var(--gutter);
   }
 
-  &.recording {
-    border-color: #dc2626;
-    background: rgba(220, 38, 38, 0.15);
-    animation: pulse 1.2s ease-in-out infinite;
+  &.with-sheet {
+    gap: var(--space-6);
+    padding-top: 0;
   }
 }
 
-.record-screen audio {
-  width: 100%;
-  max-width: 360px;
-}
-
-.record-screen [role="alert"] {
-  color: #dc2626;
-  text-align: center;
-}
-
-@keyframes pulse {
-  50% {
-    box-shadow: 0 0 0 12px rgba(220, 38, 38, 0.2);
-  }
-}
-
-.voice-sheet {
+.record-stage {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 360px;
+  gap: var(--space-6);
+  padding: calc(var(--space-12) + var(--space-3)) var(--gutter) 0;
+
+  audio {
+    width: 100%;
+  }
+
+  .voice-sheet-button {
+    width: 100%;
+  }
 }
 
-.voice-sheet-button {
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: 2px solid var(--accent-border);
-  background: var(--accent-bg);
-  color: var(--text-h);
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+/* The record button: a light green disc, 148px, the one thing to tap. */
+.record-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: var(--record-size);
+  height: var(--record-size);
+  flex: none;
+  background: var(--primary);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: var(--shadow-record);
+  color: var(--on-primary);
+  font-size: var(--text-button);
+  font-weight: var(--weight-heavy);
+  transition:
+    background-color var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
 
   &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 4px;
+    outline-offset: 6px;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--primary-hover);
+    }
+  }
+
+  &:active {
+    background: var(--primary-pressed);
+    transform: scale(0.97);
+  }
+
+  /* There is a recording already: recording again is now the second choice. */
+  &.again {
+    background: var(--panel);
+    box-shadow:
+      inset 0 0 0 6px var(--primary),
+      var(--shadow-panel);
+    color: var(--ink);
+
+    &:active {
+      background: var(--primary-wash);
+    }
+  }
+
+  /* Recording: the stop button, dark with a white square and a light green ring. */
+  &.recording {
+    width: var(--stop-size);
+    height: var(--stop-size);
+    background: var(--ink);
+    box-shadow:
+      inset 0 0 0 8px var(--primary),
+      var(--shadow-record);
+  }
+
+  /* Under a sheet: a small round button with its label. */
+  &.compact {
+    flex-direction: row;
+    gap: var(--space-2);
+    width: auto;
+    height: var(--touch);
+    padding: 0 var(--space-4) 0 var(--space-3);
+    border-radius: var(--radius-pill);
+    box-shadow: inset 0 0 0 2px var(--primary);
+    font-size: var(--text-body);
   }
 }
 
-.voice-sheet-notice {
-  margin: 0;
-  font-style: italic;
+.record-stop {
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  background: var(--on-dark);
+}
+
+.record-live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: calc(var(--space-9) * -1);
+}
+
+.record-live-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--marker-red);
+  font-family: var(--font-condensed);
+  font-size: var(--text-body);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.record-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--marker-red);
+  animation: record-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes record-blink {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 .record-timer {
-  margin: 0;
-  font-size: 24px;
-  font-variant-numeric: tabular-nums;
+  font-size: var(--text-timer);
+  font-weight: var(--weight-heavy);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.record-timer-limit {
+  color: var(--ink-2);
+  font-size: var(--text-name);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0;
+}
+
+.record-hints {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 300px;
+  margin-top: var(--space-3);
+  color: var(--ink-2);
+  line-height: 1.45;
+  text-align: center;
+}
+
+.record-hint {
+  font-size: var(--text-lead);
+}
+
+.record-example {
+  font-size: var(--text-meta);
+}
+
+.record-message,
+.record-notice {
+  text-align: center;
 }
 
 .record-notice {
-  margin: 0;
+  font-weight: var(--weight-medium);
+}
+
+/* "No se ha detectado voz", "No parece una preparación": what happened, then what to do. */
+.voice-sheet-notice {
+  width: 100%;
+  padding: var(--space-4);
+  color: var(--ink-2);
   text-align: center;
+}
+
+.voice-sheet-notice-title {
+  margin-bottom: var(--space-1);
+  color: var(--ink);
+  font-size: var(--text-lead);
+  font-weight: var(--weight-heavy);
+}
+
+/* The steps: recording, transcribing, creating the sheet. */
+.record-steps {
+  margin: 0 var(--panel-inset);
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+.record-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--row-height);
+  padding: 0 var(--space-4);
+  border-top: 1px solid var(--rule);
+  color: var(--ink-2);
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  &.now {
+    color: var(--ink);
+    font-weight: var(--weight-heavy);
+  }
+}
+
+.record-step-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 2px solid var(--idle);
+  border-radius: 50%;
+
+  .now > & {
+    border-color: var(--marker-red);
+
+    &::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--marker-red);
+    }
+  }
+
+  .done > & {
+    border-color: var(--green-action);
+    background: var(--green-action);
+
+    &::after {
+      content: "";
+      width: 9px;
+      height: 5px;
+      margin-top: -2px;
+      border-bottom: 2px solid var(--on-dark);
+      border-left: 2px solid var(--on-dark);
+      transform: rotate(-45deg);
+    }
+  }
+}
+
+.record-step-state {
+  margin-left: auto;
+  color: var(--marker-red);
+  font-size: var(--text-small);
+  font-weight: var(--weight-bold);
+}
+
+/* Under a sheet: the recording, to listen to it again or record a new one. */
+.record-again {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 var(--panel-inset);
+  padding: var(--space-4);
+
+  audio {
+    width: 100%;
+  }
+}
+
+.record-again-title {
+  font-family: var(--font-condensed);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.record-again-hint {
+  color: var(--ink-2);
+  font-size: var(--text-small);
+}
+
+.record-again-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+
+  .voice-sheet-button:disabled {
+    color: var(--ink-2);
+  }
 }
