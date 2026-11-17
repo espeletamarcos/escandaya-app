@@ -8,7 +8,7 @@ Each screen task ends with a screenshot of the running app at 390 px next to its
   - One file per family, subset by us from the full variable fonts: Google's Latin subsets leave out "≈". How they were built is in `frontend/src/fonts/README.md`.
 - [x] Rewrite `index.css`: the tokens from the mockups, the base styles (body, buttons, fields, focus ring, text selection, tabular figures) and `.visually-hidden`; remove the Vite template and its unused images; `viewport-fit=cover` and `color-scheme: light` in `index.html`; the manifest colours in `vite.config.ts` (09-C1, 09-C10)
   - Also shared classes `.panel`, `.button-primary`, `.button-quiet` and `.message-error`, a `theme-color` meta, and a reduced-motion rule. The favicon and the PWA icons stay as they are: a new app icon is out of scope.
-- [ ] Write tests, then add `ScreenTitle` (the `h1` on the tilted tape) and `EstimatedMark` ("≈" with "estimado" for screen readers) in `frontend/src/ui/` (09-C3, 09-C7)
+- [x] Write tests, then add `ScreenTitle` (the `h1` on the tilted tape) and `EstimatedMark` ("≈" with "estimado" for screen readers) in `frontend/src/ui/` (09-C3, 09-C7)
 - [ ] Turn the navigation into the bottom tab bar: fixed, clear of the home indicator, icons, the active tab on its pill; compare with any screen of `docs/design/` (09-C3, 09-C5)
 
 ## Screens

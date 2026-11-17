@@ -1,0 +1,30 @@
+/*
+ * The title on its tape. The shadow is a filter on the heading, so it follows the
+ * torn edges cut by clip-path on the tape (a box-shadow would be clipped away).
+ * Never a flat band behind the text: that reads as a highlighter.
+ */
+.screen-title {
+  max-width: 100%;
+  font-size: var(--text-title);
+  line-height: 1.1;
+  filter: var(--shadow-tape);
+}
+
+.screen-title-tape {
+  display: inline-block;
+  max-width: 100%;
+  padding: var(--space-2) 18px 6px;
+  background: var(--primary);
+  color: var(--ink);
+  font-family: var(--font-condensed);
+  font-weight: var(--weight-heavy);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  transform: rotate(-1.5deg);
+  transform-origin: left center;
+  clip-path: polygon(
+    0 6%, 3% 0, 6% 7%, 94% 3%, 97% 0, 100% 8%, 99% 50%, 100% 92%,
+    96% 100%, 92% 94%, 8% 98%, 4% 92%, 0 100%, 1% 50%
+  );
+}

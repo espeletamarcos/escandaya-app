@@ -1,0 +1,4 @@
+/* Marker blue: the colour of every estimated value in the app. */
+.estimated {
+  color: var(--estimated);
+}
