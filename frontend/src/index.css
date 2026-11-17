@@ -1,3 +1,21 @@
+/* Self-hosted variable fonts (09-C2); see fonts/README.md. If they fail to load,
+   the system sans in the font stacks takes over. */
+@font-face {
+  font-family: "Sofia Sans";
+  src: url("./fonts/sofia-sans.woff2") format("woff2");
+  font-weight: 1 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sofia Sans Condensed";
+  src: url("./fonts/sofia-sans-condensed.woff2") format("woff2");
+  font-weight: 1 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
