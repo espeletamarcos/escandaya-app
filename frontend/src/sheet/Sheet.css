@@ -1,0 +1,145 @@
+/* The sheet as the chef reads it, draft or saved (Screens 3 and 6): the header, the
+   ingredients panel and its lines, the legend. */
+/* Header: the name on its tape, then yield · covers · "sin confirmar" and the date. */
+.sheet-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--gutter) 0;
+}
+
+.sheet-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sheet-meta-values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-1);
+  font-size: var(--text-lead);
+  font-weight: var(--weight-medium);
+}
+
+.sheet-date {
+  flex: none;
+  color: var(--marker-red);
+  font-family: var(--font-condensed);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* The ingredients: one white panel, a line per ingredient. */
+.sheet-ingredients {
+  margin: var(--space-6) var(--panel-inset) 0;
+}
+
+.sheet-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-3);
+  align-items: baseline;
+  padding: 14px var(--space-4) 10px;
+
+  h2 {
+    font-family: var(--font-condensed);
+    font-size: var(--text-meta);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  span {
+    color: var(--ink-2);
+    font-family: var(--font-condensed);
+    font-size: var(--text-label);
+    font-weight: var(--weight-bold);
+  }
+}
+
+.sheet-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheet-line {
+  border-top: 1px solid var(--rule);
+
+  &.open {
+    background: var(--primary-wash);
+  }
+}
+
+/* A line: the name, then the quantity on the right. A button on the draft sheet. */
+.sheet-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-3);
+  align-items: baseline;
+  min-height: var(--row-height);
+  padding: 14px var(--space-4);
+}
+
+.sheet-line-name {
+  overflow-wrap: anywhere;
+
+  /* The open line keeps its name in bold at the top, as a heading for its fields. */
+  .open & {
+    font-weight: var(--weight-heavy);
+  }
+}
+
+.sheet-line-amount {
+  min-width: 68px;
+  text-align: right;
+  white-space: nowrap;
+
+  .sheet-missing {
+    white-space: normal;
+  }
+}
+
+/* Under the panel: the legend, the hint, the error and "Confirmar ficha". */
+.sheet-legend,
+.sheet-hint,
+.sheet-error {
+  margin: var(--space-3) var(--gutter) 0;
+  font-size: var(--text-small);
+}
+
+.sheet-legend .estimated {
+  font-weight: var(--weight-bold);
+}
+
+.sheet-legend,
+.sheet-hint {
+  color: var(--ink-2);
+}
+
+/* The saved sheet: yield · covers on one line, the confirmation under it. */
+.sheet-meta-values > div {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch);
+
+  & + div::before {
+    content: "·" / "";
+    margin-right: var(--space-1);
+  }
+}
+
+.sheet-confirmed {
+  color: var(--ink-2);
+  font-size: var(--text-small);
+}
+
+.sheet-empty {
+  padding: 14px var(--space-4);
+  border-top: 1px solid var(--rule);
+  color: var(--ink-2);
+}

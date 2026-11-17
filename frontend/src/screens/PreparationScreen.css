@@ -1,0 +1,12 @@
+/* One saved preparation (Screen 6): "‹ Preparaciones", then the sheet, read-only. */
+.preparation-back-row {
+  padding: var(--space-2) var(--space-2) 0;
+}
+
+.preparation-back {
+  gap: var(--space-1);
+}
+
+.preparation-screen .sheet-header {
+  padding-top: var(--space-2);
+}

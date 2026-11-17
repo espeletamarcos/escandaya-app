@@ -319,7 +319,7 @@ describe("App navigation (05-C1, 05-C4)", () => {
     expect(await screen.findByRole("article", { name: "Ficha guardada" })).toBeDefined();
     expect(api.getPreparation).toHaveBeenCalledWith(7);
 
-    fireEvent.click(screen.getByRole("button", { name: "Volver" }));
+    fireEvent.click(screen.getByRole("button", { name: "Volver a Preparaciones" }));
     expect(await screen.findByRole("heading", { name: "Preparaciones" })).toBeDefined();
     expect(screen.queryByRole("article", { name: "Ficha guardada" })).toBeNull();
   });

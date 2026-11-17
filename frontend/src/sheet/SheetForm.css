@@ -1,15 +1,8 @@
-/* The draft sheet (Screens 3 and 4): read like the saved sheet, edited line by line. */
+/* The draft sheet (Screens 3 and 4): editing line by line. The layout it shares with
+   the saved sheet is in Sheet.css. */
 .sheet-form {
   display: flex;
   flex-direction: column;
-}
-
-/* Header: the name on its tape, then yield · covers · "sin confirmar" and the date. */
-.sheet-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-6) var(--gutter) 0;
 }
 
 .sheet-title {
@@ -36,22 +29,6 @@
   color: var(--ink-2);
 }
 
-.sheet-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.sheet-meta-values {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: var(--space-1);
-  font-size: var(--text-lead);
-  font-weight: var(--weight-medium);
-}
-
 .sheet-meta-button {
   min-height: var(--touch);
   padding: 0 2px;
@@ -75,65 +52,8 @@
   font-weight: var(--weight-regular);
 }
 
-.sheet-date {
-  flex: none;
-  color: var(--marker-red);
-  font-family: var(--font-condensed);
-  font-size: var(--text-meta);
-  font-weight: var(--weight-heavy);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-}
-
-/* The ingredients: one white panel, a line per ingredient. */
-.sheet-ingredients {
-  margin: var(--space-6) var(--panel-inset) 0;
-}
-
-.sheet-columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: var(--space-3);
-  align-items: baseline;
-  padding: 14px var(--space-4) 10px;
-
-  h2 {
-    font-family: var(--font-condensed);
-    font-size: var(--text-meta);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-  }
-
-  span {
-    color: var(--ink-2);
-    font-family: var(--font-condensed);
-    font-size: var(--text-label);
-    font-weight: var(--weight-bold);
-  }
-}
-
-.sheet-lines {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.sheet-line {
-  border-top: 1px solid var(--rule);
-
-  &.open {
-    background: var(--primary-wash);
-  }
-}
-
 .sheet-line-button {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: var(--space-3);
-  align-items: baseline;
   width: 100%;
-  min-height: var(--row-height);
-  padding: 14px var(--space-4);
   background: none;
   border: 0;
   text-align: left;
@@ -144,25 +64,6 @@
 
   &:active {
     background: var(--primary-wash);
-  }
-}
-
-.sheet-line-name {
-  overflow-wrap: anywhere;
-
-  /* The open line keeps its name in bold at the top, as a heading for its fields. */
-  .open & {
-    font-weight: var(--weight-heavy);
-  }
-}
-
-.sheet-line-amount {
-  min-width: 68px;
-  text-align: right;
-  white-space: nowrap;
-
-  .sheet-missing {
-    white-space: normal;
   }
 }
 
@@ -271,22 +172,6 @@
   font-size: var(--text-body);
 }
 
-/* Under the panel: the legend, the hint, the error and "Confirmar ficha". */
-.sheet-legend,
-.sheet-hint,
-.sheet-error {
-  margin: var(--space-3) var(--gutter) 0;
-  font-size: var(--text-small);
-}
-
-.sheet-legend,
-.sheet-hint {
-  color: var(--ink-2);
-}
-
-.sheet-legend .estimated {
-  font-weight: var(--weight-bold);
-}
 
 .sheet-confirm {
   margin: var(--space-6) var(--gutter) 0;

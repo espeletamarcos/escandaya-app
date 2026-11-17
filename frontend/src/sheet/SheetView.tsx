@@ -1,102 +1,98 @@
-import type { ReactNode } from "react";
-import type { Sheet, Unit } from "./types";
-
-// Spanish style: 2,5 and 0,25. Up to three decimals, enough for 0,125 kg.
-const NUMBER = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 3 });
-
-function Missing({ children = "Falta" }: { children?: ReactNode }) {
-  return <span className="sheet-missing">{children}</span>;
-}
-
-const ESTIMATED = " (estimado)";
-
-/**
- * A quantity and its unit, as the chef reads them. A missing part is marked: both
- * missing is "Falta", one missing says which.
- */
-function Amount({
-  quantity,
-  unit,
-  estimated,
-  path,
-  missing,
-}: {
-  quantity: number | null;
-  unit: Unit | null;
-  estimated: boolean;
-  path: string;
-  missing: Set<string>;
-}) {
-  const quantityMissing = missing.has(`${path}.quantity`);
-  const unitMissing = missing.has(`${path}.unit`);
-  if (quantityMissing && unitMissing) return <Missing />;
-  if (quantityMissing) {
-    return (
-      <>
-        {unit} · <Missing>falta la cantidad</Missing>
-      </>
-    );
-  }
-  if (unitMissing) {
-    return (
-      <>
-        {NUMBER.format(quantity ?? 0)} · <Missing>falta la unidad</Missing>
-      </>
-    );
-  }
-  return (
-    <>
-      {NUMBER.format(quantity ?? 0)} {unit}
-      {estimated && ESTIMATED}
-    </>
-  );
-}
+import { useId } from "react";
+import { formatDate, formatDay } from "../preparations/format";
+import EstimatedMark from "../ui/EstimatedMark";
+import ScreenTitle from "../ui/ScreenTitle";
+import { Amount, Missing } from "./Amount";
+import { NUMBER } from "./numbers";
+import type { Sheet } from "./types";
+import "./Sheet.css";
 
 interface SheetViewProps {
   sheet: Sheet;
   /** The backend's missing data paths ("covers", "ingredients.1.unit"…): the marks. */
   missing: string[];
+  /** When the sheet was confirmed: the red date and "Confirmada el …". */
+  confirmedAt?: string;
 }
 
-/** A saved sheet, read-only. The marks come from the backend, never from the phone. */
-function SheetView({ sheet, missing }: SheetViewProps) {
+/**
+ * A saved sheet, read-only (Screen 6): laid out like the draft sheet, but its lines
+ * are not buttons. The marks come from the backend, never from the phone.
+ */
+function SheetView({ sheet, missing, confirmedAt }: SheetViewProps) {
   const marked = new Set(missing);
+  const ingredientsId = useId();
+  const covers = sheet.covers.value;
+  const coversText = covers === 1 ? "1 ración" : `${NUMBER.format(covers ?? 0)} raciones`;
 
   return (
     <article className="sheet-view" aria-label="Ficha guardada">
-      <h2>{sheet.name}</h2>
-      <dl>
-        <dt>Rendimiento</dt>
-        <dd>
-          <Amount {...sheet.yield} path="yield" missing={marked} />
-        </dd>
-        <dt>Raciones</dt>
-        <dd>
-          {marked.has("covers") ? (
-            <Missing />
-          ) : (
-            <>
-              {NUMBER.format(sheet.covers.value ?? 0)}
-              {sheet.covers.estimated && ESTIMATED}
-            </>
+      <header className="sheet-header">
+        <ScreenTitle>{sheet.name}</ScreenTitle>
+        <div className="sheet-meta">
+          {/* The labels are for screen readers: on screen the values speak for themselves. */}
+          <dl className="sheet-meta-values">
+            <div>
+              <dt className="visually-hidden">Rendimiento</dt>
+              <dd>
+                {marked.has("yield.quantity") && marked.has("yield.unit") ? (
+                  <>
+                    <span aria-hidden="true">Rendimiento</span> <Missing />
+                  </>
+                ) : (
+                  <Amount {...sheet.yield} path="yield" missing={marked} />
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="visually-hidden">Raciones</dt>
+              <dd>
+                {marked.has("covers") ? (
+                  <>
+                    <span aria-hidden="true">Raciones</span> <Missing />
+                  </>
+                ) : sheet.covers.estimated ? (
+                  <EstimatedMark>{coversText}</EstimatedMark>
+                ) : (
+                  coversText
+                )}
+              </dd>
+            </div>
+          </dl>
+          {confirmedAt && (
+            <time className="sheet-date" dateTime={confirmedAt}>
+              {formatDay(confirmedAt)}
+            </time>
           )}
-        </dd>
-      </dl>
+        </div>
+        {confirmedAt && <p className="sheet-confirmed">Confirmada el {formatDate(confirmedAt)}</p>}
+      </header>
 
-      <h3 id="sheet-view-ingredients">Ingredientes</h3>
-      {sheet.ingredients.length === 0 ? (
-        <p>Sin ingredientes</p>
-      ) : (
-        <ul aria-labelledby="sheet-view-ingredients">
-          {sheet.ingredients.map((item, index) => (
-            // Read-only and never reordered, so the position is a stable key.
-            <li key={index}>
-              {item.name}:{" "}
-              <Amount {...item} path={`ingredients.${index}`} missing={marked} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <section className="sheet-ingredients panel" aria-labelledby={ingredientsId}>
+        <div className="sheet-columns">
+          <h2 id={ingredientsId}>Ingredientes</h2>
+          <span aria-hidden="true">Cantidad</span>
+        </div>
+        {sheet.ingredients.length === 0 ? (
+          <p className="sheet-empty">Sin ingredientes</p>
+        ) : (
+          <ul className="sheet-lines" aria-labelledby={ingredientsId}>
+            {sheet.ingredients.map((item, index) => (
+              // Read-only and never reordered, so the position is a stable key.
+              <li key={index} className="sheet-line sheet-row">
+                <span className="sheet-line-name">{item.name}</span>{" "}
+                <span className="sheet-line-amount">
+                  <Amount {...item} path={`ingredients.${index}`} missing={marked} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <p className="sheet-legend">
+        <span className="estimated">≈ en azul</span>: estimado.
+      </p>
     </article>
   );
 }

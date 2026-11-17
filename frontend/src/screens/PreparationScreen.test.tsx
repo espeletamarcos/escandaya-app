@@ -53,7 +53,7 @@ describe("PreparationScreen (05-C4)", () => {
     const { onBack } = renderScreen();
     await screen.findByRole("heading", { name: "Tartar de atún" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Volver" }));
+    fireEvent.click(screen.getByRole("button", { name: "Volver a Preparaciones" }));
 
     expect(onBack).toHaveBeenCalledOnce();
   });
@@ -61,7 +61,7 @@ describe("PreparationScreen (05-C4)", () => {
   it("can go back while it is still loading", () => {
     const { onBack } = renderScreen(vi.fn(() => new Promise<SavedPreparation>(() => {})));
 
-    fireEvent.click(screen.getByRole("button", { name: "Volver" }));
+    fireEvent.click(screen.getByRole("button", { name: "Volver a Preparaciones" }));
 
     expect(onBack).toHaveBeenCalledOnce();
   });

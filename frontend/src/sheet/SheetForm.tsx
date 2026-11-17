@@ -14,6 +14,7 @@ import {
   toSheet,
 } from "./sheetEditor";
 import { type Sheet, UNITS } from "./types";
+import "./Sheet.css";
 import "./SheetForm.css";
 
 interface TextFieldProps {
@@ -345,7 +346,7 @@ function SheetForm({ sheet, onConfirm, confirming, confirmError }: SheetFormProp
                   type="button"
                   {...lineState(item.id)}
                   onClick={() => toggle(item.id)}
-                  className="sheet-line-button"
+                  className="sheet-line-button sheet-row"
                 >
                   <span className="sheet-line-name">
                     <span className="visually-hidden">Editar</span>{" "}
